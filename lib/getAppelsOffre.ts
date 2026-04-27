@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { getSupabase } from './supabase'
 
 export const PAGE_SIZE = 20
 
@@ -41,13 +41,18 @@ function toPaginatedResult(
   }
 }
 
+const EMPTY_PAGE = (page = 1): PaginatedResult => toPaginatedResult([], 0, page)
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 export async function getLatestAppelsOffre(filters: AoFilters = {}): Promise<PaginatedResult> {
+  const sb = getSupabase()
+  if (!sb) return EMPTY_PAGE(filters.page)
+
   const page = filters.page ?? 1
   const [from, to] = paginatedRange(page)
 
-  let q = supabase
+  let q = sb
     .from('appels_offre')
     .select('*', { count: 'exact' })
     .order('date_publication', { ascending: false })
@@ -60,7 +65,7 @@ export async function getLatestAppelsOffre(filters: AoFilters = {}): Promise<Pag
   if (filters.secteur) q = q.eq('categorie', filters.secteur)
 
   const { data, error, count } = await q
-  if (error) { console.error('getLatestAppelsOffre error:', error); return toPaginatedResult([], 0, page) }
+  if (error) { console.error('getLatestAppelsOffre error:', error); return EMPTY_PAGE(page) }
   return toPaginatedResult(data as AppelOffre[], count, page)
 }
 
@@ -70,10 +75,13 @@ export async function getAppelsOffreByCategorie(
   categorie: string,
   filters: AoFilters = {},
 ): Promise<PaginatedResult> {
+  const sb = getSupabase()
+  if (!sb) return EMPTY_PAGE(filters.page)
+
   const page = filters.page ?? 1
   const [from, to] = paginatedRange(page)
 
-  let q = supabase
+  let q = sb
     .from('appels_offre')
     .select('*', { count: 'exact' })
     .order('date_publication', { ascending: false })
@@ -85,16 +93,14 @@ export async function getAppelsOffreByCategorie(
     q = q.eq('categorie', categorie)
   }
 
-  // Extra filters (skip type/secteur if already handled by categorie param)
   if (filters.type && !TYPE_MARCHE_SLUGS.has(categorie)) q = q.eq('type_marche', filters.type)
   if (filters.procedure) q = q.eq('procedure', filters.procedure)
   if (filters.region) q = q.eq('region', filters.region)
   if (filters.date_limite) q = q.lte('date_limite', new Date(filters.date_limite).toISOString())
-  // secteur only applies when on a type_marche page (e.g. /travaux?secteur=nettoyage)
   if (filters.secteur && TYPE_MARCHE_SLUGS.has(categorie)) q = q.eq('categorie', filters.secteur)
 
   const { data, error, count } = await q
-  if (error) { console.error('getAppelsOffreByCategorie error:', error); return toPaginatedResult([], 0, page) }
+  if (error) { console.error('getAppelsOffreByCategorie error:', error); return EMPTY_PAGE(page) }
   return toPaginatedResult(data as AppelOffre[], count, page)
 }
 
@@ -105,10 +111,13 @@ export async function getAppelsOffreByRegion(
   region: string,
   filters: AoFilters = {},
 ): Promise<PaginatedResult> {
+  const sb = getSupabase()
+  if (!sb) return EMPTY_PAGE(filters.page)
+
   const page = filters.page ?? 1
   const [from, to] = paginatedRange(page)
 
-  let q = supabase
+  let q = sb
     .from('appels_offre')
     .select('*', { count: 'exact' })
     .order('date_publication', { ascending: false })
@@ -126,14 +135,17 @@ export async function getAppelsOffreByRegion(
   if (filters.secteur && TYPE_MARCHE_SLUGS.has(categorie)) q = q.eq('categorie', filters.secteur)
 
   const { data, error, count } = await q
-  if (error) { console.error('getAppelsOffreByRegion error:', error); return toPaginatedResult([], 0, page) }
+  if (error) { console.error('getAppelsOffreByRegion error:', error); return EMPTY_PAGE(page) }
   return toPaginatedResult(data as AppelOffre[], count, page)
 }
 
 // ─── Detail ───────────────────────────────────────────────────────────────────
 
 export async function getAppelOffreById(id: number): Promise<AppelOffre | null> {
-  const { data, error } = await supabase
+  const sb = getSupabase()
+  if (!sb) return null
+
+  const { data, error } = await sb
     .from('appels_offre')
     .select('*')
     .eq('id', id)
@@ -149,7 +161,10 @@ export async function getSimilarAppelsOffre(
   excludeId: number,
   limit = 4,
 ): Promise<AppelOffre[]> {
-  let q = supabase
+  const sb = getSupabase()
+  if (!sb) return []
+
+  let q = sb
     .from('appels_offre')
     .select('*')
     .neq('id', excludeId)
@@ -171,8 +186,10 @@ export async function getSimilarAppelsOffre(
 // ─── Top categories (CPV) ─────────────────────────────────────────────────────
 
 export async function getTopCategories(limit = 40): Promise<{ categorie: string; categorie_label: string; count: number }[]> {
-  // Use RPC for accurate GROUP BY counts (no row limit issue)
-  const { data, error } = await supabase.rpc('get_top_categories', { lim: limit })
+  const sb = getSupabase()
+  if (!sb) return []
+
+  const { data, error } = await sb.rpc('get_top_categories', { lim: limit })
 
   if (!error && data) {
     return (data as { categorie: string; categorie_label: string; cnt: number }[]).map((r) => ({
@@ -184,7 +201,7 @@ export async function getTopCategories(limit = 40): Promise<{ categorie: string;
 
   // Fallback: JS-side count (capped at 20k rows)
   console.warn('getTopCategories RPC failed, using fallback:', error?.message)
-  const { data: rows } = await supabase
+  const { data: rows } = await sb
     .from('appels_offre')
     .select('categorie, categorie_label')
     .not('categorie', 'is', null)
@@ -207,7 +224,10 @@ export async function getTopCategories(limit = 40): Promise<{ categorie: string;
 export async function getRegionsByCategorie(
   categorie: string,
 ): Promise<{ region: string; region_label: string; count: number }[]> {
-  let q = supabase
+  const sb = getSupabase()
+  if (!sb) return []
+
+  let q = sb
     .from('appels_offre')
     .select('region, region_label')
     .not('region', 'is', null)

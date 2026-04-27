@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import { normalizeBoampRecord } from '@/lib/boampNormalize'
 
 const BOAMP_API = 'https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records'
 const PAGE_SIZE = 100
-
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  return createClient(url, key)
-}
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -28,6 +22,7 @@ export async function GET(request: NextRequest) {
   const sinceDateStr = sinceDate.toISOString().slice(0, 10)
 
   const supabase = getSupabaseAdmin()
+  if (!supabase) return NextResponse.json({ error: 'Supabase admin not configured' }, { status: 500 })
 
   // Fetch a single page from BOAMP
   const url = new URL(BOAMP_API)
