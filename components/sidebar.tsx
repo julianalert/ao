@@ -1,151 +1,154 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useCallback } from 'react'
 
-export default function Sidebar() {
+export type SidebarCategory = {
+  categorie: string
+  categorie_label: string
+  count: number
+}
 
-  const [remoteJob, setRemoteJob] = useState<boolean>(false)
+const REGIONS = [
+  { value: '', label: 'Toutes les régions' },
+  { value: 'auvergne-rhone-alpes', label: 'Auvergne-Rhône-Alpes' },
+  { value: 'bourgogne-franche-comte', label: 'Bourgogne-Franche-Comté' },
+  { value: 'bretagne', label: 'Bretagne' },
+  { value: 'centre-val-de-loire', label: 'Centre-Val de Loire' },
+  { value: 'corse', label: 'Corse' },
+  { value: 'grand-est', label: 'Grand Est' },
+  { value: 'guadeloupe', label: 'Guadeloupe' },
+  { value: 'guyane', label: 'Guyane' },
+  { value: 'hauts-de-france', label: 'Hauts-de-France' },
+  { value: 'ile-de-france', label: 'Île-de-France' },
+  { value: 'la-reunion', label: 'La Réunion' },
+  { value: 'martinique', label: 'Martinique' },
+  { value: 'mayotte', label: 'Mayotte' },
+  { value: 'normandie', label: 'Normandie' },
+  { value: 'nouvelle-aquitaine', label: 'Nouvelle-Aquitaine' },
+  { value: 'occitanie', label: 'Occitanie' },
+  { value: 'pays-de-la-loire', label: 'Pays de la Loire' },
+  { value: 'provence-alpes-cote-d-azur', label: "Provence-Alpes-Côte d'Azur" },
+]
+
+interface SidebarProps {
+  topCategories?: SidebarCategory[]
+}
+
+export default function Sidebar({ topCategories = [] }: SidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (value) { params.set(name, value) } else { params.delete(name) }
+      params.delete('page') // reset pagination on filter change
+      return params.toString()
+    },
+    [searchParams],
+  )
+
+  const handleFilter = (name: string, value: string) => {
+    router.push(`${pathname}?${createQueryString(name, value)}`)
+  }
+
+  const handleClear = () => router.push(pathname)
+
+  const currentProcedure = searchParams.get('procedure') ?? ''
+  const currentRegion = searchParams.get('region') ?? ''
+  const currentDateLimite = searchParams.get('date_limite') ?? ''
+  const currentSecteur = searchParams.get('secteur') ?? ''
+
+  const hasFilters = currentProcedure || currentRegion || currentDateLimite || currentSecteur
 
   return (
-    <aside className="mb-8 md:mb-0 md:w-64 lg:w-72 md:ml-12 lg:ml-20 md:shrink-0 md:order-1">
-      <div data-sticky="" data-margin-top="32" data-sticky-for="768" data-sticky-wrap="">
+    <aside className="mb-8 md:mb-0 md:w-1/3 md:mr-8 lg:mr-10 md:shrink-0 md:self-start md:sticky md:top-8">
         <div className="relative bg-gray-50 rounded-xl border border-gray-200 p-5">
-          <div className="absolute top-5 right-5 leading-none">
-            <button className="text-sm font-medium text-indigo-500 hover:underline">Clear</button>
+          <div className="flex items-center justify-between mb-5">
+            <span className="text-sm font-semibold text-gray-800">Filtres</span>
+            {hasFilters && (
+              <button className="text-xs font-medium text-indigo-500 hover:underline" onClick={handleClear}>
+                Effacer tout
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-1 gap-6">
-            {/* Group 1 */}
+          <div className="space-y-6">
+            {/* Procédure */}
             <div>
-              <div className="text-sm text-gray-800 font-semibold mb-3">Job Type</div>
-              <ul className="space-y-2">
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Full-time</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Part-time</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Intership</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Contract / Freelance</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Co-founder</span>
-                  </label>
-                </li>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Procédure</div>
+              <ul className="space-y-1.5">
+                {[
+                  { value: 'ouvert', label: "Appel d'offres ouvert" },
+                  { value: 'restreint', label: "Appel d'offres restreint" },
+                  { value: 'mapa', label: 'MAPA' },
+                  { value: 'negociee', label: 'Procédure négociée' },
+                ].map(({ value, label }) => (
+                  <li key={value}>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox"
+                        checked={currentProcedure === value}
+                        onChange={() => handleFilter('procedure', currentProcedure === value ? '' : value)}
+                      />
+                      <span className="text-sm text-gray-600 group-hover:text-gray-800">{label}</span>
+                    </label>
+                  </li>
+                ))}
               </ul>
             </div>
-            {/* Group 2 */}
-            <div>
-              <div className="text-sm text-gray-800 font-semibold mb-3">Job Roles</div>
-              <ul className="space-y-2">
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" defaultChecked />
-                    <span className="text-sm text-gray-600 ml-2">Programming</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Design</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Management / Finance</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Customer Support</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Sales / Marketing</span>
-                  </label>
-                </li>
-              </ul>
-            </div>
-            {/* Group 3 */}
-            <div>
-              <div className="text-sm text-gray-800 font-semibold mb-3">Remote Only</div>
-              <div className="flex items-center">
-                <div className="form-switch">
-                  <input type="checkbox" id="remote-toggle" className="sr-only" checked={remoteJob} onChange={() => setRemoteJob(!remoteJob)} />
-                  <label htmlFor="remote-toggle">
-                    <span className="bg-white shadow-xs" aria-hidden="true" />
-                    <span className="sr-only">Remote Only</span>
-                  </label>
+
+            {/* Secteur CPV — dynamique */}
+            {topCategories.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Secteur</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {topCategories.map((cat) => (
+                    <button
+                      key={cat.categorie}
+                      onClick={() => handleFilter('secteur', currentSecteur === cat.categorie ? '' : cat.categorie)}
+                      className={`text-xs px-2 py-1 rounded-md border transition ${
+                        currentSecteur === cat.categorie
+                          ? 'bg-indigo-500 text-white border-indigo-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                      }`}
+                    >
+                      {cat.categorie_label}
+                    </button>
+                  ))}
                 </div>
-                <div className="text-sm text-gray-400 italic ml-2">{remoteJob ? 'On' : 'Off'}</div>
               </div>
-            </div>
-            {/* Group 3 */}
+            )}
+
+            {/* Région */}
             <div>
-              <div className="text-sm text-gray-800 font-semibold mb-3">Salary Range</div>
-              <ul className="space-y-2">
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">$20K - $50K</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">$50K - $100K</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">&gt; $100K</span>
-                  </label>
-                </li>
-                <li>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="form-checkbox" />
-                    <span className="text-sm text-gray-600 ml-2">Drawing / Painting</span>
-                  </label>
-                </li>
-              </ul>
-            </div>
-            {/* Group 4 */}
-            <div>
-              <div className="text-sm text-gray-800 font-semibold mb-3">Location</div>
-              <label className="sr-only">Location</label>
-              <select className="form-select w-full">
-                <option>Anywhere</option>
-                <option>London</option>
-                <option>San Francisco</option>
-                <option>New York</option>
-                <option>Berlin</option>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Région</div>
+              <select
+                className="form-select w-full text-sm"
+                value={currentRegion}
+                onChange={(e) => handleFilter('region', e.target.value)}
+              >
+                {REGIONS.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
               </select>
+            </div>
+
+            {/* Date limite */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Date limite avant le</div>
+              <input
+                type="date"
+                className="form-input w-full text-sm"
+                value={currentDateLimite}
+                onChange={(e) => handleFilter('date_limite', e.target.value)}
+              />
             </div>
           </div>
         </div>
-      </div>
     </aside>
   )
 }
