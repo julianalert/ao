@@ -3,6 +3,7 @@ export const revalidate = 3600
 export const metadata = {
   title: "Appels d'offre publics France — Annuaire BOAMP",
   description: "Consultez les derniers appels d'offre publics français. Marchés publics mis à jour chaque jour depuis le BOAMP, filtrables par catégorie, région et type.",
+  alternates: { canonical: '/' },
 }
 
 import { Suspense } from 'react'
@@ -10,6 +11,7 @@ import Hero from '@/components/hero'
 import SidebarWrapper from '@/components/sidebar-wrapper'
 import AoList from './ao-list'
 import type { AoFilters } from '@/lib/getAppelsOffre'
+import { WebSiteJsonLd } from '@/components/json-ld'
 
 interface PageProps {
   searchParams: Promise<Record<string, string>>
@@ -28,6 +30,7 @@ export default async function Home({ searchParams }: PageProps) {
 
   return (
     <>
+      <WebSiteJsonLd />
       <Hero />
 
       <section>

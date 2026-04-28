@@ -1,5 +1,6 @@
 import './css/style.css'
 
+import type { Metadata } from 'next'
 import { Inter, Nothing_You_Could_Do } from 'next/font/google'
 
 const inter = Inter({
@@ -15,13 +16,28 @@ const nycd = Nothing_You_Could_Do({
   display: 'swap'
 })
 
-export const metadata = {
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://votre-domaine.fr'
+const siteName = "Annuaire Marchés Publics"
+const defaultDescription = "Annuaire complet des appels d'offre publics français (BOAMP). Trouvez les marchés publics par catégorie, région et type : travaux, fournitures, services."
+
+export const metadata: Metadata = {
   title: {
     default: "Annuaire des appels d'offre publics France",
     template: "%s — Marchés publics France",
   },
-  description: "Annuaire complet des appels d'offre publics français (BOAMP). Trouvez les marchés publics par catégorie, région et type : travaux, fournitures, services.",
-  metadataBase: new URL('https://votre-domaine.fr'),
+  description: defaultDescription,
+  metadataBase: new URL(siteUrl),
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    siteName,
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+  ...(process.env.NEXT_PUBLIC_GSC_VERIFICATION
+    ? { verification: { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION } }
+    : {}),
 }
 
 export default function RootLayout({

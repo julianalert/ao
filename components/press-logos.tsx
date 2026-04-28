@@ -7,7 +7,7 @@ export default function PressLogos() {
           <div className="flex flex-wrap items-center justify-around text-center">
             {/* Trusted by */}
             <div className="w-full lg:w-auto py-3 px-2 lg:py-2">
-              <div className="font-nycd text-2xl text-indigo-500 whitespace-nowrap">Trusted by</div>
+              <div className="font-nycd text-2xl text-indigo-500 whitespace-nowrap">Utilisé par</div>
             </div>
 
             {/* Item */}

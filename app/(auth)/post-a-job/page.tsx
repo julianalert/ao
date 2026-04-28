@@ -3,8 +3,9 @@ import UploadImage from '@/public/images/upload.jpg'
 import AddOns from './add-ons'
 
 export const metadata = {
-  title: 'Post a Job - JobBoard',
-  description: 'Page description',
+  title: 'Publier un avis',
+  description: 'Publiez votre avis de marché public sur Annuaire Marchés Publics.',
+  robots: { index: false, follow: false },
 }
 
 export default function PostAJob() {

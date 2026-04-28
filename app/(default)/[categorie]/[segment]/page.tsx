@@ -17,6 +17,7 @@ import Link from 'next/link'
 import SidebarWrapper from '@/components/sidebar-wrapper'
 import AoItem, { formatDate, TYPE_LABELS, PROCEDURE_LABELS } from '../../ao-item'
 import Pagination from '@/components/pagination'
+import { BreadcrumbJsonLd } from '@/components/json-ld'
 
 interface PageProps {
   params: Promise<{ categorie: string; segment: string }>
@@ -48,6 +49,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${ao.titre} — ${ao.reference}`,
       description: `Marché public : ${ao.objet ?? ao.titre}. Acheteur : ${ao.acheteur ?? 'Non précisé'}. Date limite : ${formatDate(ao.date_limite, false)}.`,
       alternates: { canonical: `/${categorie}/${segment}` },
+      openGraph: {
+        type: 'article',
+        ...(ao.date_publication ? { publishedTime: ao.date_publication } : {}),
+        ...(ao.date_limite ? { expirationTime: ao.date_limite } : {}),
+      },
     }
   }
 
@@ -121,7 +127,18 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
       ? formatMontant(parsed.montantEstime)
       : null
 
+  const breadcrumbItems = [
+    { name: 'Accueil', href: '/' },
+    { name: categorieLabel, href: `/${categorie}` },
+    ...(ao.region && ao.region_label
+      ? [{ name: ao.region_label, href: `/${categorie}/${ao.region}` }]
+      : []),
+    { name: ao.titre, href: `/${categorie}/${segment}` },
+  ]
+
   return (
+    <>
+      <BreadcrumbJsonLd items={breadcrumbItems} />
     <section>
       <div className="max-w-screen-2xl mx-auto px-6 sm:px-8">
         <div className="pt-28 pb-8 md:pt-36 md:pb-16">
@@ -544,6 +561,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
         </div>
       </div>
     </section>
+    </>
   )
 }
 
@@ -577,8 +595,15 @@ async function RegionPage({
   const regionLabel = appelsOffre[0]?.region_label
     ?? region.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
+  const breadcrumbItems = [
+    { name: 'Accueil', href: '/' },
+    { name: categorieLabel ?? categorie, href: `/${categorie}` },
+    { name: regionLabel, href: `/${categorie}/${region}` },
+  ]
+
   return (
     <>
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       {/* Hero région */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-b from-indigo-100 to-white pointer-events-none -z-10" aria-hidden="true" />

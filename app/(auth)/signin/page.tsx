@@ -1,6 +1,7 @@
 export const metadata = {
-  title: 'Sign In - JobBoard',
-  description: 'Page description',
+  title: 'Connexion',
+  description: 'Connectez-vous à votre espace Annuaire Marchés Publics.',
+  robots: { index: false, follow: false },
 }
 
 export default function SignIn() {
