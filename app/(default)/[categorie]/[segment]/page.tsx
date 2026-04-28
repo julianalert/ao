@@ -127,6 +127,17 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
       ? formatMontant(parsed.montantEstime)
       : null
 
+  const daysRemaining = ao.date_limite
+    ? Math.ceil((new Date(ao.date_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null
+
+  const lieuExecution = parsed.lieuExecution ?? (ao.departement ? `Département ${ao.departement}` : null)
+
+  // All criteria extracted once for the top-level section
+  const allCriteria = parsed.lots.some((l) => l.criteria.length > 0)
+    ? parsed.lots.flatMap((l) => l.criteria)
+    : []
+
   const breadcrumbItems = [
     { name: 'Accueil', href: '/' },
     { name: categorieLabel, href: `/${categorie}` },
@@ -197,9 +208,19 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     {ao.date_limite && (
                       <li className="flex items-start gap-2.5">
                         <span className="text-gray-400 shrink-0 mt-0.5">⏰</span>
-                        <div>
+                        <div className="flex-1">
                           <div className="text-xs text-gray-400 mb-0.5">Date limite de réponse</div>
                           <div className="text-red-600 font-semibold">{formatDate(ao.date_limite, false)}</div>
+                          {daysRemaining !== null && (
+                            <div className={`mt-1 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                              daysRemaining < 0 ? 'bg-gray-100 text-gray-500' :
+                              daysRemaining < 7 ? 'bg-red-100 text-red-700' :
+                              daysRemaining < 30 ? 'bg-orange-100 text-orange-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {daysRemaining < 0 ? 'Clôturé' : `${daysRemaining}j restants`}
+                            </div>
+                          )}
                         </div>
                       </li>
                     )}
@@ -211,6 +232,15 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                           <Link href={`/${categorie}/${ao.region}`} className="text-gray-800 font-medium hover:text-blue-500 transition">
                             {ao.region_label}
                           </Link>
+                        </div>
+                      </li>
+                    )}
+                    {lieuExecution && (
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-gray-400 shrink-0 mt-0.5">📍</span>
+                        <div>
+                          <div className="text-xs text-gray-400 mb-0.5">Lieu d'exécution</div>
+                          <div className="text-gray-800 font-medium">{lieuExecution}</div>
                         </div>
                       </li>
                     )}
@@ -259,15 +289,19 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                         </div>
                       </li>
                     )}
-                    {parsed.lots.length > 0 && (
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-gray-400 shrink-0 mt-0.5">📂</span>
-                        <div>
-                          <div className="text-xs text-gray-400 mb-0.5">Nombre de lots</div>
-                          <div className="text-gray-800 font-semibold">{parsed.lots.length}</div>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-gray-400 shrink-0 mt-0.5">📂</span>
+                      <div>
+                        <div className="text-xs text-gray-400 mb-0.5">Allotissement</div>
+                        <div className="text-gray-800 font-medium">
+                          {parsed.lots.length > 1
+                            ? `${parsed.lots.length} lots`
+                            : parsed.lots.length === 1
+                              ? '1 lot'
+                              : 'Marché unique (non alloti)'}
                         </div>
-                      </li>
-                    )}
+                      </div>
+                    </li>
                   </ul>
 
                   {/* Bouton DCE */}
@@ -324,41 +358,90 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
               <h1 className="text-2xl md:text-3xl font-extrabold font-inter mb-6 leading-tight">{ao.titre}</h1>
 
+              {/* ── Synthèse rapide ── */}
+              <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {montant && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+                    <div className="text-xs text-blue-500 font-medium mb-1">Valeur estimée</div>
+                    <div className="text-sm font-bold text-blue-900">{montant}</div>
+                  </div>
+                )}
+                {(lieuExecution || ao.region_label) && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                    <div className="text-xs text-gray-500 font-medium mb-1">Lieu</div>
+                    <div className="text-sm font-bold text-gray-800 leading-snug">{lieuExecution ?? ao.region_label}</div>
+                  </div>
+                )}
+                {parsed.duree && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                    <div className="text-xs text-gray-500 font-medium mb-1">Durée</div>
+                    <div className="text-sm font-bold text-gray-800">{parsed.duree}</div>
+                  </div>
+                )}
+                {ao.type_marche && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                    <div className="text-xs text-gray-500 font-medium mb-1">Nature</div>
+                    <div className="text-sm font-bold text-gray-800">{TYPE_LABELS[ao.type_marche] ?? ao.type_marche}</div>
+                  </div>
+                )}
+                {daysRemaining !== null && (
+                  <div className={`border rounded-xl p-3 text-center ${
+                    daysRemaining < 0 ? 'bg-gray-50 border-gray-200' :
+                    daysRemaining < 7 ? 'bg-red-50 border-red-200' :
+                    daysRemaining < 30 ? 'bg-orange-50 border-orange-200' :
+                    'bg-green-50 border-green-200'
+                  }`}>
+                    <div className={`text-xs font-medium mb-1 ${
+                      daysRemaining < 0 ? 'text-gray-500' :
+                      daysRemaining < 7 ? 'text-red-500' :
+                      daysRemaining < 30 ? 'text-orange-500' :
+                      'text-green-600'
+                    }`}>Délai</div>
+                    <div className={`text-sm font-bold ${
+                      daysRemaining < 0 ? 'text-gray-700' :
+                      daysRemaining < 7 ? 'text-red-700' :
+                      daysRemaining < 30 ? 'text-orange-700' :
+                      'text-green-700'
+                    }`}>
+                      {daysRemaining < 0 ? 'Clôturé' : `${daysRemaining}j restants`}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-8 mb-10">
 
-                {/* ── Section 1 : Acheteur ── */}
-                {acheteur && (
-                  <section>
-                    <SectionTitle>Section 1 — Acheteur</SectionTitle>
-                    <InfoTable rows={[
-                      { label: 'Nom officiel', value: acheteur.nom || ao.acheteur },
-                      { label: 'SIRET', value: acheteur.siret },
-                      { label: 'Forme juridique', value: acheteur.formeJuridique },
-                      { label: 'Activité', value: acheteur.activite },
-                      { label: 'Contact', value: acheteur.contactNom },
-                      { label: 'Adresse', value: acheteur.adresse },
-                      { label: 'Code postal', value: acheteur.codePostal },
-                      { label: 'Ville', value: acheteur.ville },
-                      { label: 'Département', value: ao.departement },
-                      { label: 'Région', value: ao.region_label && ao.region
-                        ? <Link href={`/${categorie}/${ao.region}`} className="text-blue-500 hover:underline">{ao.region_label}</Link>
-                        : ao.region_label
-                      },
-                      { label: 'Téléphone', value: acheteur.telephone
-                        ? <a href={`tel:${acheteur.telephone}`} className="text-blue-500 hover:underline">{acheteur.telephone}</a>
-                        : null
-                      },
-                      { label: 'Email', value: acheteur.email
-                        ? <a href={`mailto:${acheteur.email}`} className="text-blue-500 hover:underline">{acheteur.email}</a>
-                        : null
-                      },
-                      { label: 'Site web / DCE', value: acheteur.website && acheteur.website !== 'http://0'
-                        ? <a href={acheteur.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline break-all">{acheteur.website}</a>
-                        : null
-                      },
-                    ]} />
-                  </section>
-                )}
+                {/* ── Section 1 : Acheteur (toujours visible) ── */}
+                <section>
+                  <SectionTitle>Section 1 — Acheteur</SectionTitle>
+                  <InfoTable rows={[
+                    { label: 'Nom officiel', value: acheteur?.nom ?? ao.acheteur },
+                    { label: 'SIRET', value: acheteur?.siret ?? ao.acheteur_siret },
+                    { label: 'Forme juridique', value: acheteur?.formeJuridique },
+                    { label: 'Activité', value: acheteur?.activite },
+                    { label: 'Contact', value: acheteur?.contactNom },
+                    { label: 'Adresse', value: acheteur?.adresse },
+                    { label: 'Code postal', value: acheteur?.codePostal },
+                    { label: 'Ville', value: acheteur?.ville },
+                    { label: 'Département', value: ao.departement },
+                    { label: 'Région', value: ao.region_label && ao.region
+                      ? <Link href={`/${categorie}/${ao.region}`} className="text-blue-500 hover:underline">{ao.region_label}</Link>
+                      : ao.region_label
+                    },
+                    { label: 'Téléphone', value: acheteur?.telephone
+                      ? <a href={`tel:${acheteur.telephone}`} className="text-blue-500 hover:underline">{acheteur.telephone}</a>
+                      : null
+                    },
+                    { label: 'Email', value: acheteur?.email
+                      ? <a href={`mailto:${acheteur.email}`} className="text-blue-500 hover:underline">{acheteur.email}</a>
+                      : null
+                    },
+                    { label: 'Site web / DCE', value: acheteur?.website && acheteur.website !== 'http://0'
+                      ? <a href={acheteur.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline break-all">{acheteur.website}</a>
+                      : null
+                    },
+                  ]} />
+                </section>
 
                 {/* ── Section 2 : Procédure ── */}
                 <section>
@@ -382,10 +465,11 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     { label: 'Nature du marché', value: ao.type_marche ? (TYPE_LABELS[ao.type_marche] ?? ao.type_marche) : null },
                     { label: 'Code CPV principal', value: ao.cpv_code },
                     { label: 'Valeur estimée HT', value: montant ? `${montant} ${parsed.devise ?? 'EUR'}` : null },
-                    { label: 'Lieu d\'exécution', value: parsed.lieuExecution },
+                    { label: 'Lieu d\'exécution', value: lieuExecution },
                     { label: 'Durée du marché', value: parsed.duree },
                     { label: 'Validité des offres', value: parsed.validiteOffres },
                     { label: 'Base juridique', value: parsed.baseJuridique },
+                    { label: 'Allotissement', value: parsed.lots.length > 1 ? `Divisé en ${parsed.lots.length} lots` : parsed.lots.length === 1 ? '1 lot' : 'Non divisé en lots' },
                   ]} />
 
                   {/* Caractéristiques techniques (MAPA format) */}
@@ -403,26 +487,6 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                       <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">{parsed.quantites}</p>
                     </div>
                   )}
-
-                  {/* Critères simples (MAPA) */}
-                  {parsed.criteres && !parsed.lots.some((l) => l.criteria.length > 0) && (
-                    <div className="mt-4 p-5 bg-gray-50 border border-gray-200 rounded-xl">
-                      <p className="text-sm font-semibold text-gray-700 mb-2">Critères d'attribution</p>
-                      <div className="space-y-1">
-                        {parsed.criteres.split('\n').filter(Boolean).map((line, i) => {
-                          const parts = line.split(':')
-                          const label = parts[0]?.trim()
-                          const weight = parts[1]?.trim()
-                          return (
-                            <div key={i} className="flex items-center justify-between text-sm py-1 border-b border-gray-100 last:border-0">
-                              <span className="text-gray-700">{label}</span>
-                              {weight && <span className="font-bold text-gray-900 ml-4">{weight}%</span>}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </section>
 
                 {/* ── Calendrier ── */}
@@ -433,12 +497,82 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     {
                       label: 'Date limite de réponse',
                       value: ao.date_limite
-                        ? <span className="text-red-600 font-semibold">{formatDate(ao.date_limite, false)}</span>
+                        ? <span className="text-red-600 font-semibold">
+                            {formatDate(ao.date_limite, false)}
+                            {daysRemaining !== null && daysRemaining >= 0 && (
+                              <span className="ml-2 text-xs font-normal text-gray-500">
+                                ({daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''})
+                              </span>
+                            )}
+                          </span>
                         : null
                     },
                     { label: 'Ouverture des offres', value: parsed.dateOuvertureOffres ? formatDate(parsed.dateOuvertureOffres, false) : null },
                     { label: 'Durée du marché', value: parsed.duree },
+                    { label: 'Validité des offres', value: parsed.validiteOffres },
                   ]} />
+                </section>
+
+                {/* ── Critères d'attribution (top-level, toujours visible) ── */}
+                <section>
+                  <SectionTitle>Critères d'attribution</SectionTitle>
+                  {allCriteria.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border border-gray-200 rounded-xl overflow-hidden">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
+                            <th className="px-4 py-2 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Pondération</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {allCriteria.map((c, i) => (
+                            <tr key={i} className="hover:bg-gray-50">
+                              <td className="px-4 py-2.5">
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                                  c.type === 'price' ? 'bg-green-100 text-green-700' :
+                                  c.type === 'quality' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {c.typeLabel}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2.5 text-gray-700">{c.description}</td>
+                              <td className="px-4 py-2.5 text-right">
+                                {c.weight && <span className="font-bold text-gray-900">{c.weight}%</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : parsed.criteres ? (
+                    <div className="p-5 bg-gray-50 border border-gray-200 rounded-xl">
+                      <div className="space-y-1">
+                        {parsed.criteres.split('\n').filter(Boolean).map((line, i) => {
+                          const parts = line.split(':')
+                          const label = parts[0]?.trim()
+                          const weight = parts[1]?.trim()
+                          return (
+                            <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-gray-100 last:border-0">
+                              <span className="text-gray-700">{label}</span>
+                              {weight && <span className="font-bold text-gray-900 ml-4">{weight}</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600">
+                      Les critères d'attribution sont disponibles dans le dossier de consultation (DCE).{' '}
+                      {ao.url_document && (
+                        <a href={ao.url_document} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                          Accéder au DCE →
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </section>
 
                 {/* ── Section 5 : Lots ── */}
@@ -478,7 +612,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                       { label: 'Durée', value: lot.dureeEnMois ? `${lot.dureeEnMois} mois` : null },
                     ]} />
 
-                            {/* Critères d'attribution */}
+                            {/* Critères d'attribution par lot */}
                             {lot.criteria.length > 0 && (
                               <div>
                                 <p className="text-sm font-semibold text-gray-700 mb-2">Critères d'attribution</p>
@@ -523,15 +657,116 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                   </section>
                 )}
 
-                {/* ── Conditions de participation ── */}
-                {parsed.justifications && (
-                  <section>
-                    <SectionTitle>Conditions de participation</SectionTitle>
+                {/* ── Conditions de participation (toujours visible) ── */}
+                <section>
+                  <SectionTitle>Conditions de participation</SectionTitle>
+                  {parsed.justifications ? (
                     <div className="p-5 bg-amber-50 border border-amber-200 rounded-xl">
                       <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">{parsed.justifications}</p>
                     </div>
-                  </section>
-                )}
+                  ) : (
+                    <div className="p-5 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm font-semibold text-amber-800 mb-3">Prérequis standards pour tout marché public</p>
+                      <ul className="space-y-1.5 text-sm text-gray-700 list-disc list-inside">
+                        <li>Ne pas être en situation d'exclusion légale (art. L2141 du Code de la commande publique)</li>
+                        <li>Être à jour de vos cotisations fiscales et sociales</li>
+                        <li>Disposer des capacités techniques et financières adaptées à ce marché</li>
+                      </ul>
+                      <p className="mt-3 text-xs text-gray-500">
+                        Consultez le règlement de la consultation dans le DCE pour les conditions spécifiques à cet appel d'offres.{' '}
+                        {ao.url_document && (
+                          <a href={ao.url_document} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                            Accéder au DCE →
+                          </a>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                {/* ── Comment postuler ── */}
+                <section>
+                  <SectionTitle>Comment postuler</SectionTitle>
+                  <div className="bg-white border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
+
+                    <div className="flex gap-4 p-5">
+                      <div className="w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</div>
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm mb-1">Télécharger le dossier de consultation (DCE)</p>
+                        <p className="text-sm text-gray-500 mb-2">Le DCE contient tous les documents nécessaires : règlement de la consultation (RC), CCAP, CCTP, BPU/DQE…</p>
+                        {ao.url_document ? (
+                          <a href={ao.url_document} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-500 hover:underline">
+                            Accéder au DCE →
+                          </a>
+                        ) : (
+                          <a href={`https://www.boamp.fr/pages/avis/?q=idweb:${ao.reference}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-500 hover:underline">
+                            Voir l'avis sur BOAMP.fr →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 p-5">
+                      <div className="w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</div>
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm mb-1">Analyser les documents et vérifier votre éligibilité</p>
+                        <p className="text-sm text-gray-500">Vérifiez les critères d'attribution, les conditions de participation et assurez-vous que votre offre répond au besoin exprimé dans le CCTP.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 p-5">
+                      <div className="w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</div>
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm mb-1">Préparer votre candidature</p>
+                        <p className="text-sm text-gray-500">Rassemblez les pièces habituelles : DC1 (lettre de candidature), DC2 (déclaration du candidat), références similaires, attestations fiscales et sociales, mémoire technique.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 p-5">
+                      <div className={`w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 ${
+                        daysRemaining !== null && daysRemaining >= 0 && daysRemaining < 7 ? 'bg-red-500' :
+                        daysRemaining !== null && daysRemaining >= 0 && daysRemaining < 30 ? 'bg-orange-500' :
+                        'bg-blue-500'
+                      }`}>4</div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800 text-sm mb-1">
+                          Déposer votre offre avant le{' '}
+                          <span className={ao.date_limite ? 'text-red-600' : 'text-gray-700'}>
+                            {formatDate(ao.date_limite, false)}
+                          </span>
+                          {daysRemaining !== null && daysRemaining >= 0 && (
+                            <span className={`ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                              daysRemaining < 7 ? 'bg-red-100 text-red-700' :
+                              daysRemaining < 30 ? 'bg-orange-100 text-orange-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {daysRemaining}j restants
+                            </span>
+                          )}
+                          {daysRemaining !== null && daysRemaining < 0 && (
+                            <span className="ml-2 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Clôturé</span>
+                          )}
+                        </p>
+                        <p className="text-sm text-gray-500">Déposez votre offre sur la plateforme indiquée dans le règlement de la consultation. En cas de question, contactez directement l'acheteur.</p>
+                        {(acheteur?.email || acheteur?.telephone) && (
+                          <div className="mt-2 flex flex-wrap gap-3">
+                            {acheteur?.email && (
+                              <a href={`mailto:${acheteur.email}`} className="inline-flex items-center gap-1.5 text-sm text-blue-500 hover:underline">
+                                ✉️ {acheteur.email}
+                              </a>
+                            )}
+                            {acheteur?.telephone && (
+                              <a href={`tel:${acheteur.telephone}`} className="inline-flex items-center gap-1.5 text-sm text-blue-500 hover:underline">
+                                📞 {acheteur.telephone}
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+                </section>
 
                 {/* ── Informations complémentaires ── */}
                 {parsed.infoComplementaire && (

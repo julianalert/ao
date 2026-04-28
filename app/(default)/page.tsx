@@ -1,7 +1,7 @@
 export const revalidate = 3600
 
 export const metadata = {
-  title: "Appels d'offre publics France — Annuaire BOAMP",
+  title: "Appels d'offre publics France",
   description: "Consultez les derniers appels d'offre publics français. Marchés publics mis à jour chaque jour depuis le BOAMP, filtrables par catégorie, région et type.",
   alternates: { canonical: '/' },
 }

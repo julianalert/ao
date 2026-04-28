@@ -17,7 +17,7 @@ const nycd = Nothing_You_Could_Do({
   display: 'swap'
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://votre-domaine.fr'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mon-ao.com'
 const siteName = "Annuaire Marchés Publics"
 const defaultDescription = "Annuaire complet des appels d'offre publics français (BOAMP). Trouvez les marchés publics par catégorie, région et type : travaux, fournitures, services."
 
