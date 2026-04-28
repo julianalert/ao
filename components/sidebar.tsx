@@ -76,29 +76,29 @@ export default function Sidebar({ topCategories = [] }: SidebarProps) {
           </div>
 
           <div className="space-y-6">
-            {/* Procédure */}
+            {/* Date limite */}
             <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Procédure</div>
-              <ul className="space-y-1.5">
-                {[
-                  { value: 'ouvert', label: "Appel d'offres ouvert" },
-                  { value: 'restreint', label: "Appel d'offres restreint" },
-                  { value: 'mapa', label: 'MAPA' },
-                  { value: 'negociee', label: 'Procédure négociée' },
-                ].map(({ value, label }) => (
-                  <li key={value}>
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        className="form-checkbox"
-                        checked={currentProcedure === value}
-                        onChange={() => handleFilter('procedure', currentProcedure === value ? '' : value)}
-                      />
-                      <span className="text-sm text-gray-600 group-hover:text-gray-800">{label}</span>
-                    </label>
-                  </li>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Date limite avant le</div>
+              <input
+                type="date"
+                className="form-input w-full text-sm"
+                value={currentDateLimite}
+                onChange={(e) => handleFilter('date_limite', e.target.value)}
+              />
+            </div>
+
+            {/* Région */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Région</div>
+              <select
+                className="form-select w-full text-sm"
+                value={currentRegion}
+                onChange={(e) => handleFilter('region', e.target.value)}
+              >
+                {REGIONS.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
-              </ul>
+              </select>
             </div>
 
             {/* Secteur CPV — dynamique */}
@@ -123,29 +123,29 @@ export default function Sidebar({ topCategories = [] }: SidebarProps) {
               </div>
             )}
 
-            {/* Région */}
+            {/* Procédure */}
             <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Région</div>
-              <select
-                className="form-select w-full text-sm"
-                value={currentRegion}
-                onChange={(e) => handleFilter('region', e.target.value)}
-              >
-                {REGIONS.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Procédure</div>
+              <ul className="space-y-1.5">
+                {[
+                  { value: 'ouvert', label: "Appel d'offres ouvert" },
+                  { value: 'restreint', label: "Appel d'offres restreint" },
+                  { value: 'mapa', label: 'MAPA' },
+                  { value: 'negociee', label: 'Procédure négociée' },
+                ].map(({ value, label }) => (
+                  <li key={value}>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox"
+                        checked={currentProcedure === value}
+                        onChange={() => handleFilter('procedure', currentProcedure === value ? '' : value)}
+                      />
+                      <span className="text-sm text-gray-600 group-hover:text-gray-800">{label}</span>
+                    </label>
+                  </li>
                 ))}
-              </select>
-            </div>
-
-            {/* Date limite */}
-            <div>
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Date limite avant le</div>
-              <input
-                type="date"
-                className="form-input w-full text-sm"
-                value={currentDateLimite}
-                onChange={(e) => handleFilter('date_limite', e.target.value)}
-              />
+              </ul>
             </div>
           </div>
         </div>
