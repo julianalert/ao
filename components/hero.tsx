@@ -11,7 +11,7 @@ export default async function Hero() {
       <div className="max-w-screen-2xl mx-auto px-6 sm:px-8">
         <div className="pt-24 pb-10 md:pt-32 md:pb-14">
           <h1 className="h1 font-inter mb-5 max-w-8xl">
-            Trouvez les marchés publics qui vous correspondent
+            Trouvez les appels d'offre publics qui vous correspondent
           </h1>
           <p className="text-lg text-gray-500 mb-8 max-w-8xl">
             Annuaire complet des appels d'offre publics français, mis à jour chaque jour depuis le
