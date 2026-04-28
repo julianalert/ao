@@ -44,7 +44,7 @@ export default function Pagination({ currentPage, totalPages, basePath, searchPa
       {hasPrev ? (
         <Link
           href={buildUrl(basePath, currentPage - 1, paramsWithoutPage)}
-          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition"
+          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
         >
           ← Précédent
         </Link>
@@ -62,8 +62,8 @@ export default function Pagination({ currentPage, totalPages, basePath, searchPa
               href={buildUrl(basePath, p, paramsWithoutPage)}
               className={`w-9 h-9 flex items-center justify-center text-sm font-medium rounded-lg transition ${
                 p === currentPage
-                  ? 'bg-indigo-500 text-white'
-                  : 'text-gray-600 hover:text-indigo-500 hover:bg-indigo-50'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 hover:text-blue-500 hover:bg-blue-50'
               }`}
             >
               {p}
@@ -75,7 +75,7 @@ export default function Pagination({ currentPage, totalPages, basePath, searchPa
       {hasNext ? (
         <Link
           href={buildUrl(basePath, currentPage + 1, paramsWithoutPage)}
-          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition"
+          className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
         >
           Suivant →
         </Link>

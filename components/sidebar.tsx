@@ -69,7 +69,7 @@ export default function Sidebar({ topCategories = [] }: SidebarProps) {
           <div className="flex items-center justify-between mb-5">
             <span className="text-sm font-semibold text-gray-800">Filtres</span>
             {hasFilters && (
-              <button className="text-xs font-medium text-indigo-500 hover:underline" onClick={handleClear}>
+              <button className="text-xs font-medium text-blue-500 hover:underline" onClick={handleClear}>
                 Effacer tout
               </button>
             )}
@@ -112,8 +112,8 @@ export default function Sidebar({ topCategories = [] }: SidebarProps) {
                       onClick={() => handleFilter('secteur', currentSecteur === cat.categorie ? '' : cat.categorie)}
                       className={`text-xs px-2 py-1 rounded-md border transition ${
                         currentSecteur === cat.categorie
-                          ? 'bg-indigo-500 text-white border-indigo-500'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
                       }`}
                     >
                       {cat.categorie_label}

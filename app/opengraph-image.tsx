@@ -9,7 +9,7 @@ export default function OgImage() {
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #e0e7ff 0%, #f8faff 60%, #ffffff 100%)',
+          background: 'linear-gradient(135deg, #dbeafe 0%, #f0f7ff 60%, #ffffff 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -23,10 +23,10 @@ export default function OgImage() {
         {/* Logo mark */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '40px' }}>
           <svg width="48" height="48" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#6366f1" d="M13.853 18.14 1 10.643 31 1l-.019.058z" />
-            <path fill="#a5b4fc" d="M13.853 18.14 30.981 1.058 21.357 31l-7.5-12.857z" />
+            <path fill="#2563eb" d="M13.853 18.14 1 10.643 31 1l-.019.058z" />
+            <path fill="#93c5fd" d="M13.853 18.14 30.981 1.058 21.357 31l-7.5-12.857z" />
           </svg>
-          <span style={{ fontSize: 22, fontWeight: 600, color: '#6366f1' }}>
+          <span style={{ fontSize: 22, fontWeight: 600, color: '#2563eb' }}>
             Annuaire Marchés Publics
           </span>
         </div>
@@ -36,7 +36,7 @@ export default function OgImage() {
           style={{
             fontSize: 52,
             fontWeight: 800,
-            color: '#1e1b4b',
+            color: '#1e3a8a',
             lineHeight: 1.15,
             maxWidth: 840,
             marginBottom: 28,
@@ -64,8 +64,8 @@ export default function OgImage() {
             <div
               key={label}
               style={{
-                background: '#ede9fe',
-                color: '#4338ca',
+                background: '#dbeafe',
+                color: '#1d4ed8',
                 borderRadius: 8,
                 padding: '8px 18px',
                 fontSize: 18,

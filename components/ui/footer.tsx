@@ -11,18 +11,18 @@ export default function Footer() {
               {/* Logo */}
               <Link className="inline-flex group mb-8 md:mb-0" href="/" aria-label="Annuaire Marchés Publics">
                 <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="#6366f1" d="M13.853 18.14 1 10.643 31 1l-.019.058z" />
-                  <path fill="#a5b4fc" d="M13.853 18.14 30.981 1.058 21.357 31l-7.5-12.857z" />
+                  <path fill="#2563eb" d="M13.853 18.14 1 10.643 31 1l-.019.058z" />
+                  <path fill="#93c5fd" d="M13.853 18.14 30.981 1.058 21.357 31l-7.5-12.857z" />
                 </svg>
               </Link>
             </div>
             {/* Social links */}
             <div className="flex items-center space-x-4 mb-4 md:order-2 md:ml-4 md:mb-0">
-              <div className="text-xl font-nycd text-indigo-500">Suivez-nous</div>
+              <div className="text-xl font-nycd text-blue-500">Suivez-nous</div>
               <ul className="inline-flex space-x-3">
                 <li>
                   <a
-                    className="flex justify-center items-center text-indigo-500 bg-indigo-100 hover:text-white hover:bg-indigo-500 rounded-full transition duration-150 ease-in-out"
+                    className="flex justify-center items-center text-blue-500 bg-blue-100 hover:text-white hover:bg-blue-500 rounded-full transition duration-150 ease-in-out"
                     href="#0"
                     aria-label="Twitter / X"
                   >
@@ -33,7 +33,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
-                    className="flex justify-center items-center text-indigo-500 bg-indigo-100 hover:text-white hover:bg-indigo-500 rounded-full transition duration-150 ease-in-out"
+                    className="flex justify-center items-center text-blue-500 bg-blue-100 hover:text-white hover:bg-blue-500 rounded-full transition duration-150 ease-in-out"
                     href="#0"
                     aria-label="LinkedIn"
                   >
@@ -51,16 +51,6 @@ export default function Footer() {
             {/* Left links */}
             <div className="text-sm font-medium md:order-1 mb-2 md:mb-0">
               <ul className="inline-flex flex-wrap text-sm font-medium">
-                <li className="after:content-['·'] last:after:hidden after:text-gray-400 after:px-2">
-                  <a className="text-gray-500 hover:text-gray-500 hover:underline" href="#0">
-                    Mentions légales
-                  </a>
-                </li>
-                <li className="after:content-['·'] last:after:hidden after:text-gray-400 after:px-2">
-                  <a className="text-gray-500 hover:text-gray-500 hover:underline" href="#0">
-                    Politique de confidentialité
-                  </a>
-                </li>
                 <li className="after:content-['·'] last:after:hidden after:text-gray-400 after:px-2">
                   <Link className="text-gray-500 hover:text-gray-500 hover:underline" href="/travaux">
                     Marchés travaux
@@ -81,7 +71,7 @@ export default function Footer() {
 
             {/* Copyright */}
             <div className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Annuaire Marchés Publics — Données issues du{' '}
+            Mon-ao.com © {new Date().getFullYear()} Annuaire Marchés Publics. Données issues du{' '}
               <a className="hover:underline" href="https://www.boamp.fr" target="_blank" rel="noopener noreferrer">BOAMP</a>
             </div>
           </div>

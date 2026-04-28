@@ -23,7 +23,7 @@ export default function Header() {
               {NAV.map((item) => (
                 <li key={item.href}>
                   <Link
-                    className="text-sm font-medium text-gray-600 hover:text-indigo-500 px-3 py-2 rounded-lg transition"
+                    className="text-sm font-medium text-gray-600 hover:text-blue-500 px-3 py-2 rounded-lg transition"
                     href={item.href}
                   >
                     {item.label}
@@ -35,7 +35,7 @@ export default function Header() {
             <ul className="flex grow justify-end items-center">
               <li>
                 <Link
-                  className="btn-sm text-white bg-indigo-500 hover:bg-indigo-600 shadow-xs"
+                  className="btn-sm text-white bg-blue-500 hover:bg-blue-600 shadow-xs"
                   href="/"
                 >
                   Tous les marchés

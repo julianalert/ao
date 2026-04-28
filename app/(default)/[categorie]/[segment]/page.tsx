@@ -150,7 +150,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
                   {/* Acheteur */}
                   <div className="text-center">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl mx-auto mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl mx-auto mb-3">
                       {ao.type_marche === 'travaux' ? '🏗' : ao.type_marche === 'fournitures' ? '📦' : '🛠'}
                     </div>
                     <h2 className="text-sm font-bold text-gray-800 leading-snug">
@@ -165,19 +165,19 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                   {acheteur && (acheteur.telephone || acheteur.email || acheteur.website) && (
                     <div className="space-y-2 text-sm border-t border-gray-100 pt-4">
                       {acheteur.telephone && (
-                        <a href={`tel:${acheteur.telephone}`} className="flex items-center gap-2 text-gray-600 hover:text-indigo-500 transition">
+                        <a href={`tel:${acheteur.telephone}`} className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition">
                           <span className="w-4 text-center shrink-0 text-gray-400">📞</span>
                           <span>{acheteur.telephone}</span>
                         </a>
                       )}
                       {acheteur.email && (
-                        <a href={`mailto:${acheteur.email}`} className="flex items-center gap-2 text-gray-600 hover:text-indigo-500 transition">
+                        <a href={`mailto:${acheteur.email}`} className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition">
                           <span className="w-4 text-center shrink-0 text-gray-400">✉️</span>
                           <span className="truncate text-sm">{acheteur.email}</span>
                         </a>
                       )}
                       {acheteur.website && acheteur.website !== 'http://0' && (
-                        <a href={acheteur.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-indigo-500 hover:underline">
+                        <a href={acheteur.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-500 hover:underline">
                           <span className="w-4 text-center shrink-0">🌐</span>
                           <span className="truncate text-xs">{acheteur.website.replace(/^https?:\/\//, '')}</span>
                         </a>
@@ -208,7 +208,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                         <span className="text-gray-400 shrink-0 mt-0.5">🗺</span>
                         <div>
                           <div className="text-xs text-gray-400 mb-0.5">Région</div>
-                          <Link href={`/${categorie}/${ao.region}`} className="text-gray-800 font-medium hover:text-indigo-500 transition">
+                          <Link href={`/${categorie}/${ao.region}`} className="text-gray-800 font-medium hover:text-blue-500 transition">
                             {ao.region_label}
                           </Link>
                         </div>
@@ -274,17 +274,17 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                   <div className="border-t border-gray-100 pt-4 space-y-2">
                     {ao.url_document && (
                       <a
-                        className="btn w-full text-white bg-indigo-500 hover:bg-indigo-600 shadow-xs text-sm group"
+                        className="btn w-full text-white bg-blue-500 hover:bg-blue-600 shadow-xs text-sm group"
                         href={ao.url_document}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         Accéder au dossier{' '}
-                        <span className="tracking-normal text-indigo-200 group-hover:translate-x-0.5 transition-transform duration-150 ml-1">→</span>
+                        <span className="tracking-normal text-blue-200 group-hover:translate-x-0.5 transition-transform duration-150 ml-1">→</span>
                       </a>
                     )}
                     <a
-                      className="btn w-full text-gray-600 bg-white border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 text-sm group"
+                      className="btn w-full text-gray-600 bg-white border border-gray-200 hover:border-blue-300 hover:text-blue-600 text-sm group"
                       href={`https://www.boamp.fr/pages/avis/?q=idweb:${ao.reference}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -299,13 +299,13 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
             <div className="md:grow min-w-0">
               {/* Fil d'Ariane */}
               <div className="mb-5 flex items-center flex-wrap gap-1.5 text-sm">
-                <Link className="text-indigo-500 hover:underline" href="/">Accueil</Link>
+                <Link className="text-blue-500 hover:underline" href="/">Accueil</Link>
                 <span className="text-gray-300">/</span>
-                <Link className="text-indigo-500 hover:underline" href={`/${categorie}`}>{categorieLabel}</Link>
+                <Link className="text-blue-500 hover:underline" href={`/${categorie}`}>{categorieLabel}</Link>
                 {ao.region && ao.region_label && (
                   <>
                     <span className="text-gray-300">/</span>
-                    <Link className="text-indigo-500 hover:underline" href={`/${categorie}/${ao.region}`}>{ao.region_label}</Link>
+                    <Link className="text-blue-500 hover:underline" href={`/${categorie}/${ao.region}`}>{ao.region_label}</Link>
                   </>
                 )}
               </div>
@@ -316,7 +316,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                   Réf. {ao.reference}
                 </span>
                 {parsed.allDescripteurs.map((d) => (
-                  <span key={d} className="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
+                  <span key={d} className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
                     {d}
                   </span>
                 ))}
@@ -341,19 +341,19 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                       { label: 'Ville', value: acheteur.ville },
                       { label: 'Département', value: ao.departement },
                       { label: 'Région', value: ao.region_label && ao.region
-                        ? <Link href={`/${categorie}/${ao.region}`} className="text-indigo-500 hover:underline">{ao.region_label}</Link>
+                        ? <Link href={`/${categorie}/${ao.region}`} className="text-blue-500 hover:underline">{ao.region_label}</Link>
                         : ao.region_label
                       },
                       { label: 'Téléphone', value: acheteur.telephone
-                        ? <a href={`tel:${acheteur.telephone}`} className="text-indigo-500 hover:underline">{acheteur.telephone}</a>
+                        ? <a href={`tel:${acheteur.telephone}`} className="text-blue-500 hover:underline">{acheteur.telephone}</a>
                         : null
                       },
                       { label: 'Email', value: acheteur.email
-                        ? <a href={`mailto:${acheteur.email}`} className="text-indigo-500 hover:underline">{acheteur.email}</a>
+                        ? <a href={`mailto:${acheteur.email}`} className="text-blue-500 hover:underline">{acheteur.email}</a>
                         : null
                       },
                       { label: 'Site web / DCE', value: acheteur.website && acheteur.website !== 'http://0'
-                        ? <a href={acheteur.website} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline break-all">{acheteur.website}</a>
+                        ? <a href={acheteur.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline break-all">{acheteur.website}</a>
                         : null
                       },
                     ]} />
@@ -549,7 +549,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
               {similaires.length > 0 && (
                 <div className="mb-10">
                   <h2 className="text-2xl font-bold font-inter mb-6">Marchés similaires</h2>
-                  <div className="flex flex-col border-t border-gray-200">
+                  <div className="flex flex-col gap-3">
                     {similaires.map((s) => <AoItem key={s.id} {...s} />)}
                   </div>
                 </div>
@@ -606,19 +606,18 @@ async function RegionPage({
       <BreadcrumbJsonLd items={breadcrumbItems} />
       {/* Hero région */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-indigo-100 to-white pointer-events-none -z-10" aria-hidden="true" />
+        <div className="absolute inset-0 bg-linear-to-b from-blue-100 to-white pointer-events-none -z-10" aria-hidden="true" />
         <div className="max-w-screen-2xl mx-auto px-6 sm:px-8">
           <div className="pt-28 pb-8 md:pt-36 md:pb-12">
             <div className="mb-3 flex items-center gap-1.5 text-sm flex-wrap">
-              <Link className="text-indigo-500 hover:underline" href="/">Accueil</Link>
+              <Link className="text-blue-500 hover:underline" href="/">Accueil</Link>
               <span className="text-gray-300">/</span>
-              <Link className="text-indigo-500 hover:underline" href={`/${categorie}`}>{categorieLabel}</Link>
+              <Link className="text-blue-500 hover:underline" href={`/${categorie}`}>{categorieLabel}</Link>
               <span className="text-gray-300">/</span>
               <span className="text-gray-500">{regionLabel}</span>
             </div>
             <h1 className="h1 font-inter mb-4">
-              {categorieLabel}{' '}
-              <span className="font-nycd text-indigo-500 font-normal">en {regionLabel}</span>
+              Appels d'offre {categorieLabel} en {regionLabel}
             </h1>
             <p className="text-lg text-gray-500 mb-6">
               {count > 0
@@ -634,7 +633,7 @@ async function RegionPage({
                   <Link
                     key={r.region}
                     href={`/${categorie}/${r.region}`}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-600 transition shadow-xs"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600 transition shadow-xs"
                   >
                     {r.region_label}
                   </Link>
@@ -655,19 +654,16 @@ async function RegionPage({
               </Suspense>
               <div className="md:grow">
                 <div className="pb-8 md:pb-16">
-                  <div className="flex items-baseline justify-between mb-8">
-                    <h2 className="text-2xl font-bold font-inter">{categorieLabel} — {regionLabel}</h2>
-                    {count > 0 && (
-                      <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} résultats</span>
-                    )}
-                  </div>
-                  <div className="py-8 border-b border-gray-200 mb-2">
-                  </div>
-                  <div className="flex flex-col">
+                  {count > 0 && (
+                    <div className="flex justify-end mb-4">
+                      <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offre</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-3">
                     {appelsOffre.length === 0 ? (
                       <div className="py-16 text-center text-gray-400">
                         <p className="text-lg mb-2">Aucun appel d'offre dans cette région.</p>
-                        <Link className="text-indigo-500 hover:underline" href={`/${categorie}`}>
+                        <Link className="text-blue-500 hover:underline" href={`/${categorie}`}>
                           Voir tous les marchés {categorieLabel}
                         </Link>
                       </div>
