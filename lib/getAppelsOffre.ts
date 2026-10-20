@@ -183,6 +183,29 @@ export async function getSimilarAppelsOffre(
   return (data ?? []) as AppelOffre[]
 }
 
+// ─── Open AOs (blog) ──────────────────────────────────────────────────────────
+
+export async function getOpenAppelsOffre(
+  categorie: string,
+  limit = 5,
+): Promise<{ data: AppelOffre[]; count: number }> {
+  const sb = getSupabase()
+  if (!sb) return { data: [], count: 0 }
+
+  let q = sb
+    .from('appels_offre')
+    .select('id, slug, titre, categorie, categorie_label, acheteur, region_label, date_publication, date_limite, type_marche', { count: 'exact' })
+    .gte('date_limite', new Date().toISOString())
+    .order('date_publication', { ascending: false })
+    .limit(limit)
+
+  q = TYPE_MARCHE_SLUGS.has(categorie) ? q.eq('type_marche', categorie) : q.eq('categorie', categorie)
+
+  const { data, error, count } = await q
+  if (error) { console.error('getOpenAppelsOffre error:', error); return { data: [], count: 0 } }
+  return { data: (data ?? []) as AppelOffre[], count: count ?? 0 }
+}
+
 // ─── Top categories (CPV) ─────────────────────────────────────────────────────
 
 export async function getTopCategories(limit = 40): Promise<{ categorie: string; categorie_label: string; count: number }[]> {

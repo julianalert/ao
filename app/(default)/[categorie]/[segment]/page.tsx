@@ -18,6 +18,7 @@ import SidebarWrapper from '@/components/sidebar-wrapper'
 import AoItem, { formatDate, TYPE_LABELS, PROCEDURE_LABELS } from '../../ao-item'
 import Pagination from '@/components/pagination'
 import { BreadcrumbJsonLd } from '@/components/json-ld'
+import AoGuides from '@/components/blog/ao-guides'
 
 interface PageProps {
   params: Promise<{ categorie: string; segment: string }>
@@ -327,6 +328,8 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     </a>
                   </div>
                 </div>
+
+                {ao.type_marche === 'travaux' && <AoGuides />}
             </aside>
 
             {/* ── Contenu principal ── */}

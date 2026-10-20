@@ -66,6 +66,11 @@ export default function Footer() {
                     Marchés fournitures
                   </Link>
                 </li>
+                <li className="after:content-['·'] last:after:hidden after:text-gray-400 after:px-2">
+                  <Link className="text-gray-500 hover:text-gray-500 hover:underline" href="/blog">
+                    Blog
+                  </Link>
+                </li>
               </ul>
             </div>
 

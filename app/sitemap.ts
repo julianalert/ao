@@ -4,6 +4,8 @@ import {
   getAllCategoriesForSitemap,
   getAllCategorieRegionsForSitemap,
 } from '@/lib/sitemap'
+import { getAllPosts, getPostsByAuthor } from '@/lib/blog/posts'
+import { AUTHORS } from '@/lib/blog/config'
 
 export const revalidate = 3600
 
@@ -26,6 +28,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
   ]
+
+  // Blog: index, articles, auteurs
+  const posts = getAllPosts()
+  entries.push({
+    url: `${siteUrl}/blog`,
+    lastModified: posts[0]?.updatedAt ?? now,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  })
+  for (const post of posts) {
+    entries.push({
+      url: `${siteUrl}${post.href}`,
+      lastModified: post.updatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+      images: [`${siteUrl}${post.cover}`],
+    })
+  }
+  for (const author of Object.keys(AUTHORS)) {
+    entries.push({
+      url: `${siteUrl}/blog/auteur/${author}`,
+      lastModified: getPostsByAuthor(author)[0]?.updatedAt ?? now,
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    })
+  }
 
   // Category pages: /travaux, /services, /fournitures, /:cpv-slug
   for (const cat of categories) {

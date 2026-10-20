@@ -5,6 +5,7 @@ const NAV = [
   { label: 'Travaux', href: '/travaux' },
   { label: 'Services', href: '/services' },
   { label: 'Fournitures', href: '/fournitures' },
+  { label: 'Blog', href: '/blog' },
 ]
 
 export default function Header() {
@@ -32,7 +33,15 @@ export default function Header() {
               ))}
             </ul>
 
-            <ul className="flex grow justify-end items-center">
+            <ul className="flex grow justify-end items-center gap-1">
+              <li className="md:hidden">
+                <Link
+                  className="text-sm font-medium text-gray-600 hover:text-blue-500 px-3 py-2 rounded-lg transition"
+                  href="/blog"
+                >
+                  Blog
+                </Link>
+              </li>
               <li>
                 <Link
                   className="btn-sm text-white bg-blue-500 hover:bg-blue-600 shadow-xs"
