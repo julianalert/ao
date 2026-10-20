@@ -452,3 +452,43 @@ export function PointValue({ caption }: { caption?: string }) {
     </figure>
   )
 }
+
+// ─── Article « DPGF » : où va l'argent du lot ─────────────────────────────────
+
+const LOT_SPLIT = [
+  { label: 'Déboursé sec', value: 18200, color: 'bg-gray-400', note: 'main-d\'œuvre, matériaux, matériel' },
+  { label: 'Frais généraux', value: 4368, color: 'bg-orange-500', note: '24 % du déboursé sec' },
+  { label: 'Marge', value: 1456, color: 'bg-blue-600', note: '8 % du déboursé sec' },
+]
+
+export function LotMoneySplit({ caption }: { caption?: string }) {
+  const total = LOT_SPLIT.reduce((s, r) => s + r.value, 0)
+  return (
+    <figure className="my-10">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
+        <p className="font-bold text-gray-900">Où va l'argent du lot</p>
+        <p className="mb-5 text-xs text-gray-500">Calculé à partir de l'exemple · lot de maçonnerie fictif de {eur(total)} HT, coefficient de vente 1,32</p>
+        <div className="mb-5 flex h-8 w-full gap-0.5 overflow-hidden rounded-md" aria-hidden="true">
+          {LOT_SPLIT.map((r) => (
+            <div key={r.label} className={`${r.color} flex items-center justify-center text-[11px] font-semibold text-white`} style={{ width: `${(r.value / total) * 100}%` }}>
+              {Math.round((r.value / total) * 100)} %
+            </div>
+          ))}
+        </div>
+        <ul className="space-y-2">
+          {LOT_SPLIT.map((r) => (
+            <li key={r.label} className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-gray-200 pb-2 text-sm last:border-0">
+              <span className="flex items-center gap-2">
+                <span className={`h-3 w-3 shrink-0 rounded-sm ${r.color}`} aria-hidden="true" />
+                <span className="font-semibold text-gray-900">{r.label}</span>
+                <span className="text-xs text-gray-500">{r.note}</span>
+              </span>
+              <span className="font-bold text-gray-900">{eur(r.value)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
+    </figure>
+  )
+}

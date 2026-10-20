@@ -856,3 +856,453 @@ export function GroupementSteps({ caption }: { caption?: string }) {
     </Frame>
   )
 }
+
+// ─── Petits éléments communs (articles 13 à 20) ───────────────────────────────
+
+function Card({ title, children, tone = 'default', badge }: { title: string; children?: ReactNode; tone?: 'default' | 'focus' | 'good' | 'bad' | 'muted'; badge?: string }) {
+  const tones = {
+    default: 'border-gray-200 bg-white',
+    focus: 'border-orange-300 bg-orange-50 ring-2 ring-orange-100',
+    good: 'border-emerald-200 bg-emerald-50',
+    bad: 'border-red-200 bg-red-50',
+    muted: 'border-dashed border-gray-300 bg-white',
+  }
+  return (
+    <div className={`rounded-xl border p-3 ${tones[tone]}`}>
+      {badge && <p className="mb-1 text-[11px] font-bold tracking-wide text-gray-500 uppercase">{badge}</p>}
+      <p className="text-sm font-bold leading-snug text-gray-900">{title}</p>
+      {children && <div className="mt-1 text-xs leading-5 text-gray-600">{children}</div>}
+    </div>
+  )
+}
+
+function Dots({ value, max = 3 }: { value: number; max?: number }) {
+  return (
+    <span className="inline-flex gap-1" aria-label={`${value} sur ${max}`}>
+      {Array.from({ length: max }, (_, i) => (
+        <span key={i} className={`h-2.5 w-2.5 rounded-full ${i < value ? 'bg-blue-600' : 'bg-gray-200'}`} />
+      ))}
+    </span>
+  )
+}
+
+// ─── Article « Attestations » ─────────────────────────────────────────────────
+
+export function AttestationsByStage({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Pièces administratives par étape" kicker="Cas général, à vérifier dans chaque RC" caption={caption}>
+      <div className="grid gap-2 md:grid-cols-3">
+        <Card title="1 · Au dépôt" badge="Candidature">
+          Déclaration sur l'honneur (DC1 ou DUME), DC2 ou DUME, références, qualifications demandées par le RC. Pas d'attestation officielle en général.
+        </Card>
+        <Card title="2 · Une fois retenu" badge="Délai court fixé par l'acheteur" tone="focus">
+          Attestation de vigilance, attestation de régularité fiscale, Kbis ou extrait RNE, assurances, liste des salariés étrangers le cas échéant.
+        </Card>
+        <Card title="3 · Pendant l'exécution" badge="Marchés de 5 000 € HT et plus">
+          Attestation de vigilance tous les 6 mois jusqu'à la fin du marché, avec la liste des salariés étrangers ; assurances de l'année en cours.
+        </Card>
+      </div>
+    </Frame>
+  )
+}
+
+const MONTHS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+const RENEWALS: { piece: string; months: number[]; note: string }[] = [
+  { piece: 'Attestation de vigilance', months: [0, 6], note: 'tous les 6 mois' },
+  { piece: 'Liste des salariés étrangers', months: [0, 6], note: 'avec la vigilance' },
+  { piece: 'Assurances RC et décennale', months: [0], note: 'chaque année' },
+  { piece: 'Attestation fiscale, Kbis ou RNE', months: [], note: 'le jour où vous êtes retenu' },
+]
+
+export function RenewalCalendar({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Calendrier type des renouvellements" kicker="Exemple sur une année" caption={caption}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[34rem] border-separate border-spacing-x-1 border-spacing-y-1.5 text-xs">
+          <thead>
+            <tr>
+              <th className="w-44 text-left font-semibold text-gray-500">Pièce</th>
+              {MONTHS.map((m, i) => <th key={i} className="font-semibold text-gray-400">{m}</th>)}
+              <th className="text-left font-semibold text-gray-500">Rythme</th>
+            </tr>
+          </thead>
+          <tbody>
+            {RENEWALS.map((r) => (
+              <tr key={r.piece}>
+                <th className="pr-2 text-left font-semibold text-gray-800">{r.piece}</th>
+                {MONTHS.map((_, i) => (
+                  <td key={i} className={`h-6 rounded ${r.months.includes(i) ? 'bg-orange-500' : r.months.length === 0 ? 'bg-gray-100' : 'bg-white ring-1 ring-gray-200'}`}>
+                    {r.months.includes(i) && <span className="sr-only">à renouveler</span>}
+                  </td>
+                ))}
+                <td className="pl-2 whitespace-nowrap text-gray-600">{r.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[11px] text-gray-500">Case orange : pièce à demander ce mois-là. Les dates se décalent selon la date d'émission de vos attestations.</p>
+    </Frame>
+  )
+}
+
+// ─── Article « Logiciel » ─────────────────────────────────────────────────────
+
+export function SoftwareCriteriaChain({ caption }: { caption?: string }) {
+  const stages = [
+    { title: 'Trouver', items: [{ n: 1, t: 'Couverture des sources' }] },
+    { title: 'Décider', items: [{ n: 2, t: 'Qualité du tri', key: true }] },
+    { title: 'Préparer', items: [{ n: 3, t: 'Dossier administratif' }, { n: 4, t: 'Aide au mémoire', key: true }, { n: 5, t: 'Spécificité BTP' }] },
+  ]
+  return (
+    <Frame title="Les 7 critères sur la chaîne de réponse" caption={caption}>
+      <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr_auto_1.6fr] md:items-stretch">
+        {stages.map((s, i) => (
+          <div key={s.title} className="contents">
+            <div className="rounded-xl border border-gray-200 bg-white p-3">
+              <p className="mb-2 text-xs font-bold tracking-wide text-blue-600 uppercase">{s.title}</p>
+              <ul className="space-y-1.5">
+                {s.items.map((it) => (
+                  <li key={it.n} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm ${'key' in it && it.key ? 'bg-orange-50 font-semibold text-gray-900 ring-1 ring-orange-200' : 'text-gray-700'}`}>
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">{it.n}</span>
+                    {it.t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {i < stages.length - 1 && <span className="hidden items-center text-gray-300 md:flex" aria-hidden="true">→</span>}
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <div className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white px-3 py-2 text-sm text-gray-700">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-500 text-[11px] font-bold text-white">6</span>
+          Vos données, tout au long de la chaîne
+        </div>
+        <div className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white px-3 py-2 text-sm text-gray-700">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-500 text-[11px] font-bold text-white">7</span>
+          Prise en main et coût réel
+        </div>
+      </div>
+    </Frame>
+  )
+}
+
+const FAMILIES = ['Agrégateur de veille', "Plateforme d'analyse standard", 'Application sur mesure']
+const FAMILY_SCORES: [string, number[]][] = [
+  ['1. Couverture des sources', [3, 2, 2]],
+  ['2. Qualité du tri', [1, 2, 3]],
+  ['3. Dossier administratif', [1, 2, 3]],
+  ['4. Aide au mémoire', [1, 2, 3]],
+  ['5. Spécificité BTP', [1, 2, 3]],
+  ['6. Vos données', [2, 2, 2]],
+  ['7. Rapidité de mise en place', [3, 2, 1]],
+]
+
+export function ToolFamilies({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Profil type des trois familles d'outils" kicker="Positions indicatives, à vérifier outil par outil" caption={caption}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[32rem] text-left text-xs">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="py-2 pr-2 font-semibold text-gray-500">Critère</th>
+              {FAMILIES.map((f) => <th key={f} className="px-2 py-2 font-semibold text-gray-800">{f}</th>)}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {FAMILY_SCORES.map(([label, scores]) => (
+              <tr key={label}>
+                <th className="py-2 pr-2 font-medium text-gray-700">{label}</th>
+                {scores.map((s, i) => <td key={i} className="px-2 py-2"><Dots value={s} /></td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[11px] text-gray-500">3 points : point fort typique de la famille. Un outil précis peut faire mieux ou moins bien : testez-le sur vos AO.</p>
+    </Frame>
+  )
+}
+
+// ─── Article « MAPA » ─────────────────────────────────────────────────────────
+
+export function MapaFlow({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Déroulé type d'un MAPA de travaux" kicker="Art. R2123-5 et R2181-2 du CCP" caption={caption}>
+      <ol className="grid gap-2 sm:grid-cols-3">
+        <li><Card title="1 · Avis publié" badge="BOAMP ou JAL">Dossier gratuit sur le profil d'acheteur ; délai fixé par l'acheteur.</Card></li>
+        <li><Card title="2 · Lecture du RC" badge="Le point clé">Pièces, critères, et surtout : négociation prévue ou non ?</Card></li>
+        <li><Card title="3 · Offre initiale" badge="Peut être la seule" tone="focus">Elle doit pouvoir gagner seule.</Card></li>
+      </ol>
+      <div className="my-2 grid gap-2 text-center text-[11px] font-semibold text-gray-500 sm:grid-cols-2" aria-hidden="true">
+        <span>↓ négociation prévue</span>
+        <span>↓ pas de négociation, ou attribution sur les offres initiales</span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Card title="4a · Négociation, puis offre finale" tone="muted">Avec tous les candidats, ou les mieux classés si le RC l'annonce.</Card>
+        <Card title="4b · Attribution directe" tone="muted">Sur la base des offres initiales.</Card>
+      </div>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Card title="5 · Attribution et signature">Pas de délai minimal obligatoire avant la signature en MAPA.</Card>
+        <Card title="6 · Si vous êtes écarté">Demandez les motifs : réponse sous 15 jours après votre demande.</Card>
+      </div>
+    </Frame>
+  )
+}
+
+export function MapaLayers({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Les trois couches du dossier d'un MAPA de travaux" caption={caption}>
+      <div className="space-y-2">
+        <Card title="Socle : identique pour tous les MAPA" badge="À préparer une fois">
+          DC1, DC2 ou DUME générique, fiches références, qualifications ou preuves équivalentes, pouvoir du signataire.
+        </Card>
+        <Card title="Couche du milieu : propre à chaque MAPA" badge="Ce qui est noté" tone="focus">
+          Note méthodologique sur ce chantier, cadre de prix (DPGF ou BPU et DQE), planning, attestation de visite.
+        </Card>
+        <Card title="Dernière couche : à l'attribution" badge="À tenir à jour">
+          Attestation de vigilance, attestation fiscale, Kbis ou extrait RNE, assurances, liste des salariés étrangers.
+        </Card>
+      </div>
+    </Frame>
+  )
+}
+
+// ─── Article « Peu de références » ────────────────────────────────────────────
+
+const PROOFS = [
+  { title: 'Chantiers privés', text: 'Particuliers, copropriétés, entreprises : décrits en fiche, avec une attestation du client.' },
+  { title: 'Chantiers en sous-traitance', text: 'Ce que vous avez réalisé pour un titulaire de marché public, attesté par lui.' },
+  { title: "Expérience de l'équipe", text: 'CV du dirigeant et des encadrants, titres professionnels, habilitations.' },
+  { title: 'Moyens humains et matériels', text: 'Effectifs, encadrement, engins et outillage disponibles pour le chantier.' },
+  { title: "Capacités d'un partenaire", text: 'Avec la preuve que vous en disposerez, en pratique son engagement écrit.' },
+  { title: 'Groupement', text: 'Les capacités des membres s\'additionnent : références, chiffre d\'affaires, qualifications.' },
+]
+
+export function CapacityProofs({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Six façons de prouver votre capacité" kicker="Art. R2142-3, R2142-14 et R2143-12 du CCP" caption={caption}>
+      <ol className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+        {PROOFS.map((p, i) => (
+          <li key={p.title} className="flex gap-3 rounded-xl border border-gray-200 bg-white p-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">{i + 1}</span>
+            <span>
+              <span className="block text-sm font-bold text-gray-900">{p.title}</span>
+              <span className="block text-xs leading-5 text-gray-600">{p.text}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </Frame>
+  )
+}
+
+const ROADMAP = [
+  { period: 'Mois 1 à 3', title: 'Le dossier permanent', text: 'Fiches références privées, attestations de bonne exécution, DUME générique.' },
+  { period: 'Mois 3 à 6', title: 'Sous-traiter ou cotraiter', text: 'Intervenir sur des marchés publics aux côtés d\'un titulaire, et demander une attestation.' },
+  { period: 'Mois 6 à 9', title: 'Premiers petits MAPA', text: 'Des marchés de votre taille, près de chez vous : chaque marché gagné devient une référence publique.', focus: true },
+  { period: 'Mois 9 à 12', title: 'Monter en taille', text: 'Des lots plus gros, seul ou en groupement, avec vos premières références publiques.' },
+]
+
+export function ReferencesRoadmap({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Construire ses références publiques" kicker="Feuille de route indicative sur 12 mois" caption={caption}>
+      <ol className="grid gap-2 md:grid-cols-4">
+        {ROADMAP.map((s) => (
+          <li key={s.period}>
+            <Card title={s.title} badge={s.period} tone={s.focus ? 'focus' : 'default'}>{s.text}</Card>
+          </li>
+        ))}
+      </ol>
+    </Frame>
+  )
+}
+
+// ─── Article « DPGF, BPU, DQE » ───────────────────────────────────────────────
+
+export function PriceDocs({ caption }: { caption?: string }) {
+  const rows = [
+    ['Ce qui vous engage', 'Le prix global', 'Chaque prix unitaire', 'Rien : c\'est une simulation'],
+    ['Comment vous êtes payé', 'Le forfait, quelles que soient les quantités', 'Selon les quantités réellement exécutées', '—'],
+    ['À quoi il sert', 'Comparer les offres poste par poste, payer les acomptes', 'Fixer vos prix', 'Comparer et noter les offres'],
+    ['Marché type', 'Travaux définis, prix forfaitaire', 'Accords-cadres à bons de commande, entretien', 'Accompagne le BPU'],
+  ]
+  return (
+    <Frame title="DPGF, BPU, DQE" kicker="Ce qui vous engage et ce qui vous paie" caption={caption}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[34rem] border-separate border-spacing-1 text-left text-xs">
+          <thead>
+            <tr>
+              <th />
+              <th className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white">DPGF</th>
+              <th className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-bold text-white">BPU</th>
+              <th className="rounded-lg bg-orange-100 px-3 py-2 text-sm font-bold text-orange-800">DQE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, ...cells]) => (
+              <tr key={label}>
+                <th className="px-2 py-2 font-semibold text-gray-600">{label}</th>
+                {cells.map((c, i) => <td key={i} className="rounded-lg border border-gray-200 bg-white px-3 py-2 leading-snug text-gray-800">{c}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Frame>
+  )
+}
+
+// ─── Article « IA et appels d'offres » ────────────────────────────────────────
+
+const AI_QUADRANTS = [
+  { key: 'tl', title: "L'IA aide, vous tranchez", tone: 'border-orange-200 bg-orange-50', titleTone: 'text-orange-700', tasks: ['Décision go / no-go', 'Prix', 'Engagements du mémoire', 'Contenu propre au chantier'] },
+  { key: 'tr', title: "L'IA prépare, vous relisez", tone: 'border-blue-200 bg-blue-50', titleTone: 'text-blue-700', tasks: ['Lire le dossier de consultation', 'Extraire critères et pondération', 'Trame du mémoire', 'Comparer à votre profil'] },
+  { key: 'bl', title: 'Peu à gagner', tone: 'border-gray-200 bg-white', titleTone: 'text-gray-600', tasks: ['Visite de site', 'Échanges avec l\'acheteur'] },
+  { key: 'br', title: "L'IA fait, contrôle léger", tone: 'border-emerald-200 bg-emerald-50', titleTone: 'text-emerald-700', tasks: ['Veille quotidienne', 'Pré-remplir DC1, DC2, DUME', 'Repérer une pièce manquante'] },
+]
+
+export function AiTaskMap({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Répartition des tâches entre l'IA et votre équipe" kicker="Positions indicatives" caption={caption}>
+      <div className="grid grid-cols-[auto_1fr_1fr] gap-2">
+        <div className="row-span-2 flex items-center">
+          <p className="text-[11px] font-semibold text-gray-500 [writing-mode:vertical-rl] rotate-180">Risque si une erreur passe ↑</p>
+        </div>
+        {AI_QUADRANTS.map((q) => (
+          <div key={q.key} className={`rounded-xl border p-3 ${q.tone}`}>
+            <p className={`mb-2 text-sm font-extrabold ${q.titleTone}`}>{q.title}</p>
+            <ul className="flex flex-wrap gap-1">
+              {q.tasks.map((t) => <li key={t} className="rounded-md bg-white px-2 py-0.5 text-[11px] font-medium text-gray-700 shadow-xs">{t}</li>)}
+            </ul>
+          </div>
+        ))}
+        <div />
+        <p className="col-span-2 text-center text-[11px] font-semibold text-gray-500">Temps gagné grâce à l'IA →</p>
+      </div>
+    </Frame>
+  )
+}
+
+const AI_STEPS: { step: string; ai: string; team: string; human?: boolean }[] = [
+  { step: 'Veille', ai: 'Repère chaque jour les AO de votre métier et de votre zone', team: 'Ajuste les réglages' },
+  { step: 'Lecture du dossier', ai: 'Résume le RC et le CCTP, avec la référence de chaque information', team: 'Contrôle les chiffres clés' },
+  { step: 'Décision go / no-go', ai: 'Propose une note argumentée', team: 'Décide', human: true },
+  { step: 'Dossier administratif', ai: 'Pré-remplit DC1, DC2 ou DUME, vérifie les attestations', team: 'Signe' },
+  { step: 'Trame du mémoire', ai: 'Construit le sommaire sur les sous-critères, propose vos blocs', team: 'Choisit les blocs' },
+  { step: 'Contenu propre au chantier', ai: 'Signale les sections encore génériques', team: 'Écrit : site, phasage, moyens', human: true },
+  { step: 'Prix', ai: 'Reprend le cadre de prix et vérifie les totaux', team: 'Chiffre et fixe le prix', human: true },
+  { step: 'Relecture et dépôt', ai: 'Vérifie pièces et cohérence', team: 'Relit, signe, dépose' },
+]
+
+export function AiWorkflowSteps({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Partage du travail dans l'application Vision" kicker="De la veille au dépôt" caption={caption}>
+      <ol className="space-y-1.5">
+        {AI_STEPS.map((s, i) => (
+          <li key={s.step} className={`grid items-start gap-2 rounded-xl border p-2.5 text-xs sm:grid-cols-[11rem_1fr_1fr] ${s.human ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-white'}`}>
+            <p className="flex items-center gap-2 text-sm font-bold text-gray-900">
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${s.human ? 'bg-orange-500' : 'bg-blue-600'}`}>{i + 1}</span>
+              {s.step}
+            </p>
+            <p className="text-gray-600"><span className="font-semibold text-blue-700">IA : </span>{s.ai}</p>
+            <p className="text-gray-600"><span className="font-semibold text-gray-900">Vous : </span>{s.team}</p>
+          </li>
+        ))}
+      </ol>
+    </Frame>
+  )
+}
+
+// ─── Article « Offre anormalement basse » ─────────────────────────────────────
+
+export function OabProcedure({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Procédure de l'offre anormalement basse" kicker="Art. L2152-6, R2152-3 et R2152-4 du CCP" caption={caption}>
+      <ol className="grid gap-2 sm:grid-cols-4">
+        <li><Card title="1 · Détection" badge="Acheteur">Écart avec les autres offres ou l'estimation, prix unitaires anormaux, main-d'œuvre insuffisante.</Card></li>
+        <li><Card title="2 · Demande de justification" badge="Obligatoire">Écrite, avec un délai. Pas de rejet sans cette étape.</Card></li>
+        <li><Card title="3 · Votre réponse" badge="Vous" tone="focus">Chiffres et pièces : décomposition, heures, devis, conditions favorables.</Card></li>
+        <li><Card title="4 · Examen" badge="Acheteur">Les justifications rendent-elles compte du prix ?</Card></li>
+      </ol>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Card title="Offre maintenue" tone="good">Elle est classée normalement selon les critères.</Card>
+        <Card title="Offre rejetée" tone="bad">Si les justifications sont insuffisantes, ou si le prix bas s'explique par le non-respect d'obligations sociales, environnementales ou du droit du travail.</Card>
+      </div>
+    </Frame>
+  )
+}
+
+export function OabJustifications({ caption }: { caption?: string }) {
+  const good = [
+    ['Procédé de construction', 'Préfabrication, procédé qui réduit les heures sur site'],
+    ['Solution technique', 'Variante de mise en œuvre décrite au mémoire'],
+    ['Conditions favorables', 'Matériel en propre amorti, dépôt proche, chantier voisin, stock acquis'],
+    ['Originalité de l\'offre', 'Organisation ou phasage qui réduit la durée'],
+    ['Prix d\'achat', 'Devis fournisseurs, remises négociées, joints en annexe'],
+  ]
+  const bad = ['« Nous sommes très compétitifs »', '« Nous maîtrisons nos coûts »', '« Prix d\'appel pour entrer chez ce client »', '« Nos prix sont toujours bas »', 'Une réponse sans chiffres ni pièces']
+  return (
+    <Frame title="Justifications recevables et insuffisantes" kicker="D'après l'art. R2152-3 du CCP et la pratique" caption={caption}>
+      <div className="grid gap-2 md:grid-cols-2">
+        <div className="rounded-xl border border-emerald-200 bg-white p-3">
+          <p className="mb-2 text-xs font-bold text-emerald-700">✓ Recevables, si elles sont chiffrées</p>
+          <ul className="space-y-1.5">
+            {good.map(([t, d]) => (
+              <li key={t} className="text-sm text-gray-800"><span className="font-semibold">{t}</span> <span className="text-xs text-gray-500">· {d}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl border border-red-200 bg-white p-3">
+          <p className="mb-2 text-xs font-bold text-red-600">✕ Insuffisantes</p>
+          <ul className="space-y-1.5">
+            {bad.map((t) => <li key={t} className="text-sm text-gray-800">{t}</li>)}
+          </ul>
+        </div>
+      </div>
+    </Frame>
+  )
+}
+
+// ─── Article « Sous-traitance » ───────────────────────────────────────────────
+
+export function SubcontractingFlows({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Contrats et paiements en sous-traitance" kicker="Art. L2193-10 à L2193-14 du CCP, loi du 31 décembre 1975" caption={caption}>
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+        <Card title="Acheteur public" badge="Maître d'ouvrage">Signe le marché avec le titulaire, accepte le sous-traitant (DC4).</Card>
+        <p className="text-center text-[11px] font-semibold text-gray-500">
+          <span className="block text-blue-700">Marché public ↔</span>
+          <span className="block">paie le titulaire</span>
+        </p>
+        <Card title="Titulaire" badge="Entreprise principale">Responsable de tous les travaux envers l'acheteur.</Card>
+      </div>
+      <div className="my-2 grid gap-2 sm:grid-cols-[1fr_auto_1fr]">
+        <p className="rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-800">
+          ↓ Paiement direct, dès 600 € TTC, après acceptation et agrément
+        </p>
+        <span />
+        <p className="rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2 text-center text-xs font-semibold text-gray-600">
+          ↓ Contrat de sous-traitance
+        </p>
+      </div>
+      <div className="mx-auto max-w-md">
+        <Card title="Sous-traitant de premier rang" badge="Vous" tone="focus">Aucun contrat avec l'acheteur, mais payé directement par lui.</Card>
+      </div>
+    </Frame>
+  )
+}
+
+export function DirectPaymentCircuit({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Circuit du paiement direct" kicker="Art. R2193-11 à R2193-14 et R2192-23 du CCP" caption={caption}>
+      <ol className="grid gap-2 sm:grid-cols-4">
+        <li><Card title="1 · Votre demande" badge="Vous" tone="focus">Au titulaire, par un moyen qui date la réception, et copie à l'acheteur avec cette preuve.</Card></li>
+        <li><Card title="2 · Le titulaire : 15 jours" badge="Titulaire">Il donne son accord ou notifie un refus. Silence = accord.</Card></li>
+        <li><Card title="3 · L'acheteur paie" badge="Acheteur">Délai compté à partir de l'accord du titulaire, ou de la fin des 15 jours.</Card></li>
+        <li><Card title="4 · En cas de retard" badge="Vous">Intérêts moratoires et indemnité forfaitaire de recouvrement.</Card></li>
+      </ol>
+    </Frame>
+  )
+}

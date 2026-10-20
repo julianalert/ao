@@ -7,8 +7,11 @@ import {
   DossierStructure, DeroulementAo, GoNoGoFlow, DecisionMatrix, RcToSommaire, GenericVsSpecific, VeilleMap,
   RcThreePasses, RcAnnotated, OptionsMatrix, OptionChooser, EnvLevers, EnvLevels, RejectionTimeline, NotesToAction,
   GroupementForms, GroupementSteps,
+  AttestationsByStage, RenewalCalendar, SoftwareCriteriaChain, ToolFamilies, MapaFlow, MapaLayers, CapacityProofs,
+  ReferencesRoadmap, PriceDocs, AiTaskMap, AiWorkflowSteps, OabProcedure, OabJustifications, SubcontractingFlows,
+  DirectPaymentCircuit,
 } from './diagrams'
-import { CostTree, CostByWinRate, TravauxScale, DispenseHistory, NotationSimulation, PointValue } from './charts'
+import { CostTree, CostByWinRate, TravauxScale, DispenseHistory, NotationSimulation, PointValue, LotMoneySplit } from './charts'
 import CostCalculator from './cost-calculator'
 
 // ─── Typographie des articles ─────────────────────────────────────────────────
@@ -126,6 +129,22 @@ export const mdxComponents = {
   GroupementSteps,
   Formula,
   Letter,
+  AttestationsByStage,
+  RenewalCalendar,
+  SoftwareCriteriaChain,
+  ToolFamilies,
+  MapaFlow,
+  MapaLayers,
+  CapacityProofs,
+  ReferencesRoadmap,
+  PriceDocs,
+  LotMoneySplit,
+  AiTaskMap,
+  AiWorkflowSteps,
+  OabProcedure,
+  OabJustifications,
+  SubcontractingFlows,
+  DirectPaymentCircuit,
 }
 
 // ─── Composants utilisables dans les articles ─────────────────────────────────
