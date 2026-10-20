@@ -3,8 +3,12 @@ import Link from 'next/link'
 import { getAppelOffreById } from '@/lib/getAppelsOffre'
 import { aoHref, formatDate, PROCEDURE_LABELS } from '@/app/(default)/ao-item'
 import { downloadFormat } from '@/lib/blog/config'
-import { DossierStructure, DeroulementAo, GoNoGoFlow, DecisionMatrix, RcToSommaire, GenericVsSpecific, VeilleMap } from './diagrams'
-import { CostTree, CostByWinRate, TravauxScale, DispenseHistory } from './charts'
+import {
+  DossierStructure, DeroulementAo, GoNoGoFlow, DecisionMatrix, RcToSommaire, GenericVsSpecific, VeilleMap,
+  RcThreePasses, RcAnnotated, OptionsMatrix, OptionChooser, EnvLevers, EnvLevels, RejectionTimeline, NotesToAction,
+  GroupementForms, GroupementSteps,
+} from './diagrams'
+import { CostTree, CostByWinRate, TravauxScale, DispenseHistory, NotationSimulation, PointValue } from './charts'
 import CostCalculator from './cost-calculator'
 
 // ─── Typographie des articles ─────────────────────────────────────────────────
@@ -108,6 +112,20 @@ export const mdxComponents = {
   VeilleMap,
   TravauxScale,
   DispenseHistory,
+  NotationSimulation,
+  PointValue,
+  RcThreePasses,
+  RcAnnotated,
+  OptionsMatrix,
+  OptionChooser,
+  EnvLevers,
+  EnvLevels,
+  RejectionTimeline,
+  NotesToAction,
+  GroupementForms,
+  GroupementSteps,
+  Formula,
+  Letter,
 }
 
 // ─── Composants utilisables dans les articles ─────────────────────────────────
@@ -195,5 +213,34 @@ export function DownloadCard({ href, title, description }: { href: string; title
       </span>
       <span className="ml-auto hidden shrink-0 text-sm font-medium text-blue-600 sm:block">Télécharger ({downloadFormat(href)})</span>
     </a>
+  )
+}
+
+// Formule mise en forme : « gauche = numérateur ÷ dénominateur » ou « gauche = expression »
+export function Formula({ left, num, den, right }: { left: string; num?: string; den?: string; right?: string }) {
+  return (
+    <div className="my-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 text-center text-sm font-semibold text-gray-900">
+      <span>{left}</span>
+      <span className="text-blue-500">=</span>
+      {num && den ? (
+        <span className="inline-flex flex-col items-center">
+          <span className="px-2 pb-1">{num}</span>
+          <span className="w-full border-t-2 border-gray-800" aria-hidden="true" />
+          <span className="sr-only">divisé par</span>
+          <span className="px-2 pt-1">{den}</span>
+        </span>
+      ) : (
+        <span>{right}</span>
+      )}
+    </div>
+  )
+}
+
+// Modèle de courrier : rendu comme une feuille, texte sélectionnable
+export function Letter({ children }: { children: ReactNode }) {
+  return (
+    <div className="my-8 rounded-2xl border border-gray-200 bg-white p-5 font-[Georgia,serif] text-[15px] leading-7 text-gray-800 shadow-sm sm:p-8 [&_li]:leading-7 [&_ol]:mb-4 [&_p]:mb-4 [&_p:last-child]:mb-0">
+      {children}
+    </div>
   )
 }

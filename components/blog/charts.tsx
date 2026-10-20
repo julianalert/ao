@@ -341,3 +341,114 @@ export function DispenseHistory({ caption }: { caption?: string }) {
     />
   )
 }
+
+// ─── Article « Critères d'attribution » ───────────────────────────────────────
+
+// Simulation fictive : pondération 60 / 40, formule proportionnelle (mêmes valeurs que le simulateur Excel)
+const SIMU = { tech: 0.6, prix: 0.4, offers: [
+  { name: 'Offre A', desc: 'La moins chère, mémoire générique', priceGap: 0, techNote: 11 },
+  { name: 'Offre B', desc: '+8 %, mémoire spécifique', priceGap: 0.08, techNote: 16 },
+  { name: 'Offre C', desc: '+15 %, meilleur mémoire', priceGap: 0.15, techNote: 16.5 },
+] }
+
+export function NotationSimulation({ caption }: { caption?: string }) {
+  const rows = SIMU.offers.map((o) => {
+    const prixNote = 20 / (1 + o.priceGap)
+    const techPts = (o.techNote / 20) * SIMU.tech * 100
+    const prixPts = (prixNote / 20) * SIMU.prix * 100
+    return { ...o, prixNote, techPts, prixPts, total: techPts + prixPts }
+  })
+  const best = Math.max(...rows.map((r) => r.total))
+  const fmt = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1, minimumFractionDigits: 1 })
+
+  return (
+    <figure className="my-10">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
+        <p className="font-bold text-gray-900">Trois offres sur un même lot</p>
+        <p className="mb-5 text-xs text-gray-500">Simulation fictive · valeur technique 60 %, prix 40 %, formule proportionnelle</p>
+
+        <ul className="space-y-4">
+          {rows.map((r) => (
+            <li key={r.name}>
+              <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold text-gray-900">
+                  {r.name} <span className="font-normal text-gray-500">· {r.desc}</span>
+                </p>
+                <p className={`text-sm font-extrabold ${r.total === best ? 'text-emerald-700' : 'text-gray-800'}`}>
+                  {fmt(r.total)} / 100 {r.total === best && '✓ retenue'}
+                </p>
+              </div>
+              <div className="flex h-7 w-full gap-0.5 overflow-hidden rounded-md bg-white" title={`${r.name} : technique ${fmt(r.techPts)}, prix ${fmt(r.prixPts)}`}>
+                <div className="flex items-center rounded-l-md bg-blue-600 px-2 text-[11px] font-semibold text-white" style={{ width: `${r.techPts}%` }}>
+                  Technique {fmt(r.techPts)}
+                </div>
+                <div className="flex items-center rounded-r-md bg-orange-500 px-2 text-[11px] font-semibold text-white" style={{ width: `${r.prixPts}%` }}>
+                  Prix {fmt(r.prixPts)}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <table className="mt-5 w-full text-left text-xs text-gray-600">
+          <thead>
+            <tr className="border-b border-gray-200 text-[11px] text-gray-500 uppercase">
+              <th className="py-1.5 pr-2 font-semibold">Offre</th>
+              <th className="py-1.5 pr-2 font-semibold">Note technique</th>
+              <th className="py-1.5 pr-2 font-semibold">Note prix</th>
+              <th className="py-1.5 font-semibold">Total</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map((r) => (
+              <tr key={r.name}>
+                <td className="py-1.5 pr-2 font-semibold text-gray-800">{r.name}</td>
+                <td className="py-1.5 pr-2">{fmt(r.techNote)} / 20 → {fmt(r.techPts)} pts</td>
+                <td className="py-1.5 pr-2">{r.prixNote.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} / 20 → {fmt(r.prixPts)} pts</td>
+                <td className="py-1.5 font-semibold text-gray-900">{fmt(r.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
+    </figure>
+  )
+}
+
+// Hausse de prix qui compense 1 point de valeur technique (sur 20), formule proportionnelle
+const POINT_VALUE_WEIGHTS = [0.3, 0.4, 0.5, 0.6, 0.7]
+
+export function PointValue({ caption }: { caption?: string }) {
+  const rows = POINT_VALUE_WEIGHTS.map((t) => {
+    const p = 1 - t
+    const x = 1 / (1 - t / (20 * p)) - 1
+    return { t, x }
+  })
+  const max = 0.15
+  const pct = (n: number) => `${(n * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %`
+
+  return (
+    <figure className="my-10">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
+        <p className="font-bold text-gray-900">Combien vaut 1 point de mémoire technique (sur 20) ?</p>
+        <p className="mb-6 text-xs text-gray-500">
+          Hausse de prix qui garde la même note globale · formule proportionnelle, prix et valeur technique seuls, écart mesuré par rapport au prix le plus bas
+        </p>
+        <ul className="space-y-2.5">
+          {rows.map((r) => (
+            <li key={r.t} className="grid grid-cols-[7.5rem_1fr] items-center gap-3 sm:grid-cols-[9rem_1fr]">
+              <span className="text-xs font-semibold text-gray-700">Technique à {Math.round(r.t * 100)} %</span>
+              <span className="flex items-center gap-2">
+                <span className="h-5 rounded-r bg-blue-600" style={{ width: `${(r.x / max) * 100}%` }} title={`${pct(r.x)} de prix`} />
+                <span className="text-xs font-bold whitespace-nowrap text-gray-900">{pct(r.x)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-[11px] text-gray-500">Lecture : à 60 % de valeur technique, une offre 8,1 % plus chère mais meilleure d'1 point sur le mémoire garde la même note.</p>
+      </div>
+      {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
+    </figure>
+  )
+}
