@@ -28,6 +28,7 @@ export type PostFrontmatter = {
   download?: { label: string; href: string; description?: string }
   faq?: FaqItem[]
   sources?: Source[]
+  order?: number           // départage les articles publiés le même jour (plus grand = plus récent)
   draft?: boolean
 }
 
@@ -91,7 +92,7 @@ export const getAllPosts = cache((): PostMeta[] => {
     .filter((f) => f.endsWith('.mdx'))
     .map((f) => readPostFile(f.replace(/\.mdx$/, ''))?.meta)
     .filter((m): m is PostMeta => !!m && isPublished(m))
-    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || (b.order ?? 0) - (a.order ?? 0))
 })
 
 export const getPost = cache((slug: string) => {

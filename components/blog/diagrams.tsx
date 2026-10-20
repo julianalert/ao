@@ -331,3 +331,152 @@ export function DecisionMatrix({ caption }: { caption?: string }) {
     </figure>
   )
 }
+
+// ─── Article « Mémoire technique » ────────────────────────────────────────────
+
+const SOUS_CRITERES = [
+  { rc: "Méthodologie d'exécution", weight: 25, section: '4. Méthodologie' },
+  { rc: 'Moyens humains et matériels affectés', weight: 15, section: '2. Moyens humains · 3. Matériel' },
+  { rc: 'Planning et phasage', weight: 10, section: '5. Planning' },
+  { rc: 'Sécurité et organisation en site occupé', weight: 5, section: '6. Sécurité' },
+  { rc: 'Gestion des déchets et environnement', weight: 5, section: '7. Environnement' },
+]
+
+export function RcToSommaire({ caption }: { caption?: string }) {
+  const total = SOUS_CRITERES.reduce((s, c) => s + c.weight, 0)
+  const pages = 12
+  return (
+    <figure className="my-10">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-bold text-gray-900">Du RC au sommaire</p>
+          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Pondérations d'exemple</p>
+        </div>
+        <div className="mb-2 hidden grid-cols-[1fr_auto_1fr] gap-3 text-xs font-semibold text-gray-500 sm:grid">
+          <p>Dans le RC : valeur technique {total} %</p>
+          <span />
+          <p>Dans votre mémoire (sur {pages} pages)</p>
+        </div>
+        <ol className="space-y-2">
+          {SOUS_CRITERES.map((c) => {
+            const share = Math.round((c.weight / total) * pages)
+            return (
+              <li key={c.rc} className="grid items-center gap-2 sm:grid-cols-[1fr_auto_1fr] sm:gap-3">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5">
+                  <span className="text-sm font-medium text-gray-800">{c.rc}</span>
+                  <span className="shrink-0 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">{c.weight} %</span>
+                </div>
+                <span className="hidden text-gray-300 sm:block" aria-hidden="true">→</span>
+                <div className="rounded-xl border border-blue-100 bg-white px-3 py-2.5">
+                  <div className="mb-1.5 flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-gray-900">{c.section}</span>
+                    <span className="shrink-0 text-xs text-gray-500">≈ {share} p.</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-gray-100" aria-hidden="true">
+                    <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${(c.weight / SOUS_CRITERES[0].weight) * 100}%` }} />
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+        <p className="mt-3 text-[11px] text-gray-500">
+          La section 1 (compréhension du projet) et la page de garde s'ajoutent en tête. Le prix compte pour les 40 % restants.
+        </p>
+      </div>
+      {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
+    </figure>
+  )
+}
+
+export function GenericVsSpecific({ caption }: { caption?: string }) {
+  return (
+    <figure className="my-10">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-bold text-gray-900">Générique ou spécifique</p>
+          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Même sujet, même longueur</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-red-200 bg-white p-4">
+            <p className="mb-2 text-xs font-bold text-red-600">✕ Générique : presque rien à noter</p>
+            <p className="text-sm leading-6 text-gray-700">
+              Notre entreprise dispose d'une équipe expérimentée et d'un matériel adapté. Nous mettons tout en œuvre
+              pour respecter les délais, garantir la sécurité des usagers et limiter les nuisances, conformément à nos
+              valeurs de qualité et de satisfaction client.
+            </p>
+          </div>
+          <div className="rounded-xl border border-emerald-200 bg-white p-4">
+            <p className="mb-2 text-xs font-bold text-emerald-700">✓ Spécifique : chaque point se vérifie</p>
+            <p className="text-sm leading-6 text-gray-700">
+              <mark className="rounded bg-emerald-50 px-0.5 text-gray-900">4 compagnons</mark> encadrés par{' '}
+              <mark className="rounded bg-emerald-50 px-0.5 text-gray-900">M. Roux, chef de chantier, 12 ans en site occupé</mark>.{' '}
+              <mark className="rounded bg-emerald-50 px-0.5 text-gray-900">Mini-pelle 2,5 t des semaines 2 à 6</mark>. Aucune
+              livraison <mark className="rounded bg-emerald-50 px-0.5 text-gray-900">de 8 h 15 à 8 h 45 et de 16 h 15 à 16 h 45</mark>,
+              heures d'entrée et de sortie des élèves.
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-[11px] text-gray-500">Exemple fictif.</p>
+      </div>
+      {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
+    </figure>
+  )
+}
+
+// ─── Article « Veille appels d'offres » ───────────────────────────────────────
+
+// Positions indicatives (en %) : x = couverture des sources, y = automatisation du tri
+const VEILLE_OPTIONS = [
+  { label: 'Alertes BOAMP seules', x: 16, y: 14, paid: false },
+  { label: 'BOAMP + profils + JAL à la main', x: 58, y: 14, paid: false },
+  { label: 'Agrégateur payant', x: 84, y: 26, paid: true },
+  { label: "Outil d'analyse", x: 82, y: 80, paid: true },
+  { label: 'Prestataire', x: 52, y: 90, paid: true },
+]
+
+export function VeilleMap({ caption }: { caption?: string }) {
+  return (
+    <figure className="my-10">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-bold text-gray-900">Les options de veille</p>
+          <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">Positions indicatives</p>
+        </div>
+        <div className="grid grid-cols-[auto_1fr] gap-2">
+          <p className="flex items-center text-[11px] font-semibold text-gray-500 [writing-mode:vertical-rl] rotate-180">
+            Tri des AO : à la main → automatisé
+          </p>
+          <div className="relative h-72 rounded-xl border border-gray-200 bg-white sm:h-80">
+            <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-gray-200" aria-hidden="true" />
+            <div className="absolute inset-y-0 left-1/2 border-l border-dashed border-gray-200" aria-hidden="true" />
+            <ul>
+              {VEILLE_OPTIONS.map((o) => (
+                <li
+                  key={o.label}
+                  className="absolute -translate-x-1/2 translate-y-1/2"
+                  style={{ left: `${o.x}%`, bottom: `${o.y}%` }}
+                >
+                  <span
+                    className={`block max-w-[9.5rem] rounded-lg border px-2 py-1 text-center text-[11px] leading-tight font-semibold shadow-xs sm:max-w-none sm:whitespace-nowrap sm:text-xs ${
+                      o.paid ? 'border-blue-600 bg-blue-600 text-white' : 'border-blue-300 bg-white text-blue-700'
+                    }`}
+                  >
+                    {o.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <span />
+          <p className="text-center text-[11px] font-semibold text-gray-500">Couverture des sources : BOAMP seul → toutes les sources →</p>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-4 text-[11px] text-gray-600">
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-blue-300 bg-white" aria-hidden="true" /> Gratuit</span>
+          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-blue-600" aria-hidden="true" /> Payant</span>
+        </div>
+      </div>
+      {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
+    </figure>
+  )
+}

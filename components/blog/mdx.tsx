@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { getAppelOffreById } from '@/lib/getAppelsOffre'
 import { aoHref, formatDate, PROCEDURE_LABELS } from '@/app/(default)/ao-item'
 import { downloadFormat } from '@/lib/blog/config'
-import { DossierStructure, DeroulementAo, GoNoGoFlow, DecisionMatrix } from './diagrams'
+import { DossierStructure, DeroulementAo, GoNoGoFlow, DecisionMatrix, RcToSommaire, GenericVsSpecific, VeilleMap } from './diagrams'
+import { CostTree, CostByWinRate, TravauxScale } from './charts'
+import CostCalculator from './cost-calculator'
 
 // ─── Typographie des articles ─────────────────────────────────────────────────
 
@@ -98,6 +100,13 @@ export const mdxComponents = {
   DeroulementAo,
   GoNoGoFlow,
   DecisionMatrix,
+  CostTree,
+  CostByWinRate,
+  CostCalculator,
+  RcToSommaire,
+  GenericVsSpecific,
+  VeilleMap,
+  TravauxScale,
 }
 
 // ─── Composants utilisables dans les articles ─────────────────────────────────

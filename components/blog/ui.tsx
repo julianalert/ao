@@ -159,6 +159,21 @@ export function ArticleCta({ post }: { post: PostMeta }) {
         Passez à l'action
       </h2>
       <div className="grid gap-4 md:grid-cols-2">
+        {!post.download && (
+          <Link
+            href="/travaux"
+            className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-6 transition hover:border-blue-300 hover:shadow-md"
+          >
+            <span className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Chaque matin</span>
+            <span className="mb-2 font-bold text-gray-900 group-hover:text-blue-600 transition">Les nouveaux appels d'offres de travaux</span>
+            <span className="mb-5 text-sm leading-6 text-gray-500">
+              Publiés au BOAMP et classés par métier et par région sur mon-ao.com, gratuitement.
+            </span>
+            <span className="mt-auto text-sm font-medium text-blue-600">
+              Voir les AO de travaux <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+            </span>
+          </Link>
+        )}
         {post.download && (
           <a
             href={post.download.href}
