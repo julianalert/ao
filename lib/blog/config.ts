@@ -5,6 +5,13 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mon-ao.com'
 
 export const BLOG_PATH = '/blog'
 
+// Pagination de l'index du blog : /blog, puis /blog/page/2, /blog/page/3…
+export const POSTS_PER_PAGE = 9
+
+export function blogPageHref(page: number): string {
+  return page <= 1 ? BLOG_PATH : `${BLOG_PATH}/page/${page}`
+}
+
 // Dimensions standard des miniatures d'articles (16:9)
 export const COVER_WIDTH = 1600
 export const COVER_HEIGHT = 900

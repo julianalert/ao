@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { cache } from 'react'
 import matter from 'gray-matter'
-import { AUTHORS, CATEGORIES, categoryHref, type Author } from './config'
+import { AUTHORS, CATEGORIES, POSTS_PER_PAGE, categoryHref, type Author } from './config'
 
 const POSTS_DIR = path.join(process.cwd(), 'content', 'blog')
 const WORDS_PER_MINUTE = 220
@@ -102,6 +102,14 @@ export const getPost = cache((slug: string) => {
   if (!post || !isPublished(post.meta)) return null
   return post
 })
+
+export function getBlogPageCount(): number {
+  return Math.max(1, Math.ceil(getAllPosts().length / POSTS_PER_PAGE))
+}
+
+export function getPostsPage(page: number): PostMeta[] {
+  return getAllPosts().slice((page - 1) * POSTS_PER_PAGE, page * POSTS_PER_PAGE)
+}
 
 export function getPostsByAuthor(authorSlug: string): PostMeta[] {
   return getAllPosts().filter((p) => p.author === authorSlug)

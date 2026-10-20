@@ -4,8 +4,8 @@ import {
   getAllCategoriesForSitemap,
   getAllCategorieRegionsForSitemap,
 } from '@/lib/sitemap'
-import { getAllPosts, getPostsByAuthor, getPostsByCategory } from '@/lib/blog/posts'
-import { AUTHORS, CATEGORIES, categoryHref } from '@/lib/blog/config'
+import { getAllPosts, getBlogPageCount, getPostsByAuthor, getPostsByCategory } from '@/lib/blog/posts'
+import { AUTHORS, CATEGORIES, blogPageHref, categoryHref } from '@/lib/blog/config'
 import { OUTILS } from '@/lib/outils/catalog'
 import { INDICES, indiceHref } from '@/lib/indices-catalog'
 import { PIECES_AVEC_PAGE, pieceHref } from '@/lib/outils/pieces'
@@ -43,6 +43,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly',
     priority: 0.8,
   })
+  for (let page = 2; page <= getBlogPageCount(); page++) {
+    entries.push({ url: `${siteUrl}${blogPageHref(page)}`, lastModified: now, changeFrequency: 'weekly', priority: 0.3 })
+  }
   for (const post of posts) {
     entries.push({
       url: `${siteUrl}${post.href}`,

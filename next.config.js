@@ -5,6 +5,10 @@ const nextConfig = {
   outputFileTracingIncludes: {
     '/**': ['./content/**/*'],
   },
+  // La page 1 de l'index du blog est /blog
+  async redirects() {
+    return [{ source: '/blog/page/1', destination: '/blog', permanent: true }]
+  },
 }
 
 module.exports = nextConfig

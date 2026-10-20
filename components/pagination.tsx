@@ -5,6 +5,7 @@ interface PaginationProps {
   totalPages: number
   basePath: string      // e.g. "/travaux" or "/travaux/ile-de-france"
   searchParams?: Record<string, string>
+  pageHref?: (page: number) => string   // URLs par chemin (ex. /blog/page/2) au lieu de ?page=
 }
 
 function buildUrl(basePath: string, page: number, searchParams: Record<string, string>): string {
@@ -15,7 +16,7 @@ function buildUrl(basePath: string, page: number, searchParams: Record<string, s
   return qs ? `${basePath}?${qs}` : basePath
 }
 
-export default function Pagination({ currentPage, totalPages, basePath, searchParams = {} }: PaginationProps) {
+export default function Pagination({ currentPage, totalPages, basePath, searchParams = {}, pageHref }: PaginationProps) {
   if (totalPages <= 1) return null
 
   const hasPrev = currentPage > 1
@@ -38,12 +39,13 @@ export default function Pagination({ currentPage, totalPages, basePath, searchPa
   }
 
   const { page: _removed, ...paramsWithoutPage } = searchParams
+  const href = (page: number) => (pageHref ? pageHref(page) : buildUrl(basePath, page, paramsWithoutPage))
 
   return (
     <nav className="flex items-center justify-center gap-1 pt-8 pb-4" aria-label="Pagination">
       {hasPrev ? (
         <Link
-          href={buildUrl(basePath, currentPage - 1, paramsWithoutPage)}
+          href={href(currentPage - 1)}
           className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
         >
           ← Précédent
@@ -59,7 +61,8 @@ export default function Pagination({ currentPage, totalPages, basePath, searchPa
           ) : (
             <Link
               key={p}
-              href={buildUrl(basePath, p, paramsWithoutPage)}
+              href={href(p)}
+              aria-current={p === currentPage ? 'page' : undefined}
               className={`w-9 h-9 flex items-center justify-center text-sm font-medium rounded-lg transition ${
                 p === currentPage
                   ? 'bg-blue-500 text-white'
@@ -74,7 +77,7 @@ export default function Pagination({ currentPage, totalPages, basePath, searchPa
 
       {hasNext ? (
         <Link
-          href={buildUrl(basePath, currentPage + 1, paramsWithoutPage)}
+          href={href(currentPage + 1)}
           className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition"
         >
           Suivant →
