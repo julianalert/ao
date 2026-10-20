@@ -4,8 +4,8 @@ import {
   getAllCategoriesForSitemap,
   getAllCategorieRegionsForSitemap,
 } from '@/lib/sitemap'
-import { getAllPosts, getPostsByAuthor } from '@/lib/blog/posts'
-import { AUTHORS } from '@/lib/blog/config'
+import { getAllPosts, getPostsByAuthor, getPostsByCategory } from '@/lib/blog/posts'
+import { AUTHORS, CATEGORIES, categoryHref } from '@/lib/blog/config'
 import { OUTILS } from '@/lib/outils/catalog'
 import { INDICES, indiceHref } from '@/lib/indices-catalog'
 
@@ -31,6 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
+  entries.push({ url: `${siteUrl}/a-propos`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 })
+
   // Blog: index, articles, auteurs
   const posts = getAllPosts()
   entries.push({
@@ -46,6 +48,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.8,
       images: [`${siteUrl}${post.cover}`],
+    })
+  }
+  for (const category of Object.keys(CATEGORIES)) {
+    entries.push({
+      url: `${siteUrl}${categoryHref(category)}`,
+      lastModified: getPostsByCategory(category)[0]?.updatedAt ?? now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     })
   }
   for (const author of Object.keys(AUTHORS)) {

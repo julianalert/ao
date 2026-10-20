@@ -169,13 +169,13 @@ export function LegalRefs({ items }: { items: LegalRef[] }) {
 
 export type FaqItem = { q: string; a: string }
 
-export function Faq({ items }: { items: FaqItem[] }) {
+export function Faq({ items, questionsAsH3 = false }: { items: FaqItem[]; questionsAsH3?: boolean }) {
   return (
     <div className="divide-y divide-gray-200 border-y border-gray-200">
       {items.map((item) => (
         <details key={item.q} className="group py-1">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left font-semibold text-gray-900 [&::-webkit-details-marker]:hidden">
-            {item.q}
+            {questionsAsH3 ? <h3>{item.q}</h3> : item.q}
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition group-open:rotate-45" aria-hidden="true">
               +
             </span>
@@ -204,9 +204,9 @@ export function AuthorBlock() {
         <p className="text-lg font-bold text-gray-900">{AUTEUR.nom}</p>
         <p className="text-sm font-medium text-blue-600 mb-3">{AUTEUR.role}</p>
         <p className="text-sm text-gray-600 leading-relaxed mb-3">{AUTEUR.bio}</p>
-        <a href={AUTEUR.aProposHref} target="_blank" rel="noopener" className="text-sm font-medium text-blue-600 hover:underline">
+        <Link href={AUTEUR.aProposHref} className="text-sm font-medium text-blue-600 hover:underline">
           En savoir plus sur l'auteur →
-        </a>
+        </Link>
       </div>
     </div>
   )

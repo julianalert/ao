@@ -12,11 +12,16 @@ export function formatPostDate(iso: string): string {
   )
 }
 
-export function CategoryPill({ label }: { label: string }) {
+const pillClass = 'inline-flex rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-xs font-semibold tracking-wide text-blue-600 uppercase'
+
+// Avec href, la pastille renvoie vers la page silo du pilier (relative z-10 : reste
+// cliquable au-dessus du lien étiré des cartes d'articles)
+export function CategoryPill({ label, href }: { label: string; href?: string }) {
+  if (!href) return <span className={pillClass}>{label}</span>
   return (
-    <span className="inline-flex rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-xs font-semibold tracking-wide text-blue-600 uppercase">
+    <Link href={href} className={`${pillClass} relative z-10 transition hover:border-blue-300 hover:bg-blue-100`}>
       {label}
-    </span>
+    </Link>
   )
 }
 
@@ -104,7 +109,7 @@ export function PostCard({ post, priority = false, headingLevel = 'h2' }: { post
       </div>
       <div className="flex grow flex-col p-5">
         <div className="mb-3">
-          <CategoryPill label={post.categoryLabel} />
+          <CategoryPill label={post.categoryLabel} href={post.categoryHref} />
         </div>
         <Heading className="mb-2 text-lg font-bold leading-snug text-gray-900 group-hover:text-blue-600 transition">
           <Link href={post.href} className="after:absolute after:inset-0">

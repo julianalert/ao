@@ -206,6 +206,20 @@ export async function getOpenAppelsOffre(
   return { data: (data ?? []) as AppelOffre[], count: count ?? 0 }
 }
 
+// ─── Stats (page À propos) ────────────────────────────────────────────────────
+
+export async function getAoStats(): Promise<{ total: number; open: number }> {
+  const sb = getSupabase()
+  if (!sb) return { total: 0, open: 0 }
+
+  const [all, open] = await Promise.all([
+    sb.from('appels_offre').select('id', { count: 'exact', head: true }),
+    sb.from('appels_offre').select('id', { count: 'exact', head: true }).gte('date_limite', new Date().toISOString()),
+  ])
+  if (all.error || open.error) console.error('getAoStats error:', all.error ?? open.error)
+  return { total: all.count ?? 0, open: open.count ?? 0 }
+}
+
 // ─── Top categories (CPV) ─────────────────────────────────────────────────────
 
 export async function getTopCategories(limit = 40): Promise<{ categorie: string; categorie_label: string; count: number }[]> {

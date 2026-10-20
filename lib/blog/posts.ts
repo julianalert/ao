@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { cache } from 'react'
 import matter from 'gray-matter'
-import { AUTHORS, CATEGORIES, type Author } from './config'
+import { AUTHORS, CATEGORIES, categoryHref, type Author } from './config'
 
 const POSTS_DIR = path.join(process.cwd(), 'content', 'blog')
 const WORDS_PER_MINUTE = 220
@@ -38,6 +38,7 @@ export type PostMeta = PostFrontmatter & {
   updatedAt: string
   authorData: Author
   categoryLabel: string
+  categoryHref: string
   readingTime: number
   wordCount: number
 }
@@ -67,6 +68,7 @@ function readPostFile(slug: string): { meta: PostMeta; body: string } | null {
       updatedAt: fm.updatedAt ?? fm.publishedAt,
       authorData: author,
       categoryLabel: category.label,
+      categoryHref: categoryHref(fm.category),
       wordCount,
       readingTime: Math.max(1, Math.round(wordCount / WORDS_PER_MINUTE)),
     },
@@ -103,6 +105,10 @@ export const getPost = cache((slug: string) => {
 
 export function getPostsByAuthor(authorSlug: string): PostMeta[] {
   return getAllPosts().filter((p) => p.author === authorSlug)
+}
+
+export function getPostsByCategory(categoryKey: string): PostMeta[] {
+  return getAllPosts().filter((p) => p.category === categoryKey)
 }
 
 // Articles du même pilier d'abord, puis les plus récents

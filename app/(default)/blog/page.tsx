@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/blog/posts'
-import { CATEGORIES, TRAVAUX_CATEGORY_LINKS, analysisCtaHref } from '@/lib/blog/config'
+import { CATEGORIES, TRAVAUX_CATEGORY_LINKS, analysisCtaHref, categoryHref } from '@/lib/blog/config'
 import { PostCard } from '@/components/blog/ui'
 import { BlogJsonLd, BreadcrumbJsonLd } from '@/components/json-ld'
 
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function BlogIndexPage() {
   const posts = getAllPosts()
-  const pillars = Object.entries(CATEGORIES).filter(([key]) => posts.some((p) => p.category === key))
+  const pillars = Object.entries(CATEGORIES)
 
   return (
     <>
@@ -52,16 +52,22 @@ export default function BlogIndexPage() {
               sur de vrais appels d'offres publiés sur mon-ao.com.
             </p>
 
-            {pillars.length > 0 && (
-              <div className="mt-8 flex flex-wrap gap-1.5">
-                {pillars.map(([key, cat]) => (
-                  <span key={key} className="inline-flex rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-xs">
+            <nav aria-label="Thèmes du blog" className="mt-8 flex flex-wrap gap-1.5">
+              {pillars.map(([key, cat]) => {
+                const count = posts.filter((p) => p.category === key).length
+                return (
+                  <Link
+                    key={key}
+                    href={categoryHref(key)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-xs transition hover:border-blue-400 hover:text-blue-600"
+                  >
+                    <span aria-hidden="true">{cat.emoji}</span>
                     {cat.label}
-                    <span className="ml-1 text-gray-300">{posts.filter((p) => p.category === key).length}</span>
-                  </span>
-                ))}
-              </div>
-            )}
+                    {count > 0 && <span className="text-gray-300">{count}</span>}
+                  </Link>
+                )
+              })}
+            </nav>
           </div>
         </div>
       </section>

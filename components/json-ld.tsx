@@ -99,7 +99,7 @@ export function ToolJsonLd({ name, description, path, dateModified, faq, author 
         isAccessibleForFree: true,
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
         dateModified,
-        author: { '@type': 'Person', name: author.name, url: author.url },
+        author: { '@type': 'Person', name: author.name, url: author.url.startsWith('/') ? `${siteUrl}${author.url}` : author.url },
         publisher: { '@id': `${siteUrl}/#organization` },
       },
       {
@@ -288,6 +288,102 @@ export function BlogJsonLd({ posts, name, description }: { posts: PostMeta[]; na
       image: `${SITE_URL}${p.cover}`,
       author: { '@id': `${SITE_URL}/blog/auteur/${p.authorData.slug}#person`, name: p.authorData.name },
     })),
+  }
+  return <JsonLdScript schema={schema} />
+}
+
+// Page silo d'un pilier du blog : CollectionPage + liste des articles
+export function BlogCategoryJsonLd({ name, description, path, posts }: {
+  name: string
+  description: string
+  path: string
+  posts: PostMeta[]
+}) {
+  const url = `${SITE_URL}${path}`
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': `${url}#page`,
+    url,
+    name,
+    description,
+    inLanguage: 'fr-FR',
+    isPartOf: { '@type': 'Blog', '@id': `${SITE_URL}/blog#blog` },
+    publisher: blogPublisher,
+    ...(posts.length > 0
+      ? {
+          mainEntity: {
+            '@type': 'ItemList',
+            itemListElement: posts.map((p, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: `${SITE_URL}${p.href}`,
+              name: p.title,
+            })),
+          },
+        }
+      : {}),
+  }
+  return <JsonLdScript schema={schema} />
+}
+
+// ─── Page À propos : AboutPage + Organization + fondateurs ────────────────────
+
+export type AboutFounder = { slug: string; name: string; jobTitle: string; description: string; image: string; url?: string }
+
+export function AboutPageJsonLd({ description, founders, parent, foundingDate, faq }: {
+  description: string
+  founders: AboutFounder[]
+  parent: { name: string; url: string; description: string }
+  foundingDate: string
+  faq: { q: string; a: string }[]
+}) {
+  const url = `${SITE_URL}/a-propos`
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'AboutPage',
+        '@id': `${url}#page`,
+        url,
+        name: 'À propos de mon-ao.com',
+        inLanguage: 'fr-FR',
+        about: { '@id': `${SITE_URL}/#organization` },
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#organization`,
+        name: 'mon-ao.com',
+        alternateName: 'Annuaire Marchés Publics',
+        url: SITE_URL,
+        logo: `${SITE_URL}/icon.svg`,
+        description,
+        foundingDate,
+        areaServed: { '@type': 'Country', name: 'France' },
+        founder: founders.map((f) => ({ '@id': `${url}#${f.slug}` })),
+        parentOrganization: { '@type': 'Organization', ...parent, address: { '@type': 'PostalAddress', addressRegion: 'Var', addressCountry: 'FR' } },
+      },
+      ...founders.map((f) => ({
+        '@type': 'Person',
+        '@id': `${url}#${f.slug}`,
+        name: f.name,
+        jobTitle: f.jobTitle,
+        description: f.description,
+        image: f.image,
+        ...(f.url ? { url: f.url } : {}),
+        worksFor: { '@type': 'Organization', name: parent.name, url: parent.url },
+      })),
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
   }
   return <JsonLdScript schema={schema} />
 }

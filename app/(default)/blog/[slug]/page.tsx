@@ -115,6 +115,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         items={[
           { name: 'Accueil', href: '/' },
           { name: 'Blog', href: '/blog' },
+          { name: meta.categoryLabel, href: meta.categoryHref },
           { name: meta.title, href: meta.href },
         ]}
       />
@@ -143,11 +144,11 @@ export default async function BlogPostPage({ params }: PageProps) {
                   <span className="text-gray-300">/</span>
                   <Link className="text-blue-500 hover:underline" href="/blog">Blog</Link>
                   <span className="text-gray-300">/</span>
-                  <span className="text-gray-500">{meta.categoryLabel}</span>
+                  <Link className="text-blue-500 hover:underline" href={meta.categoryHref}>{meta.categoryLabel}</Link>
                 </nav>
 
                 <div className="mb-4">
-                  <CategoryPill label={meta.categoryLabel} />
+                  <CategoryPill label={meta.categoryLabel} href={meta.categoryHref} />
                 </div>
 
                 <h1 className="mb-5 text-3xl font-extrabold leading-tight text-gray-900 md:text-[2.75rem] md:leading-[1.15]">
