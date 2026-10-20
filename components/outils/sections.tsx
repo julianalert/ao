@@ -6,6 +6,7 @@ import { getAppelsOffreByCategorie } from '@/lib/getAppelsOffre'
 import { OUTILS } from '@/lib/outils/catalog'
 import { AUTEUR } from '@/lib/outils/author'
 import { fmtDate } from '@/lib/format'
+import AlerteSignup from '@/components/alertes/alerte-signup'
 
 export type Crumb = { name: string; href: string }
 
@@ -303,6 +304,7 @@ export function ToolFooter({ current, updated }: { current: string; updated: Rea
       </section>
       <section>
         <div className="max-w-5xl mx-auto px-6 sm:px-8 py-12 md:py-16 space-y-14">
+          {current !== 'alertes-appels-offres' && <AlerteSignup source={`outil/${current}`} criteres={{ types: ['travaux'] }} contexte="de votre métier" />}
           <RelatedAos />
           <RelatedTools current={current} />
         </div>

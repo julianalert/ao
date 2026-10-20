@@ -18,6 +18,9 @@ import SidebarWrapper from '@/components/sidebar-wrapper'
 import AoItem, { formatDate, TYPE_LABELS, PROCEDURE_LABELS } from '../../ao-item'
 import Pagination from '@/components/pagination'
 import { BreadcrumbJsonLd } from '@/components/json-ld'
+import AlerteSignup from '@/components/alertes/alerte-signup'
+import FavoriButton from '@/components/alertes/favori-button'
+import { departementLabel, normaliserDepartement } from '@/lib/alertes/geo'
 import AoGuides from '@/components/blog/ao-guides'
 
 interface PageProps {
@@ -327,6 +330,15 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                       Voir sur BOAMP.fr
                     </a>
                   </div>
+
+                  <a
+                    className="btn w-full mt-2 text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 text-sm"
+                    href={`/outils/analyse-rc?ao=${ao.id}`}
+                  >
+                    📑 Analyser le RC de cet AO
+                  </a>
+
+                  <FavoriButton aoId={ao.id} ouvert={daysRemaining === null || daysRemaining > 2} />
                 </div>
 
                 {ao.type_marche === 'travaux' && <AoGuides />}
@@ -783,6 +795,17 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
               </div>
 
+              <div className="mb-10">
+                <AlerteSignup
+                  source={`ao/${ao.id}`}
+                  criteres={{
+                    categories: ao.categorie && !TYPE_MARCHE_SLUGS.has(ao.categorie) ? [ao.categorie] : [],
+                    departements: ao.departement ? [normaliserDepartement(ao.departement)] : [],
+                  }}
+                  contexte={[categorieLabel.toLowerCase(), ao.departement ? departementLabel(ao.departement) : null].filter(Boolean).join(', ')}
+                />
+              </div>
+
               {/* Marchés similaires */}
               {similaires.length > 0 && (
                 <div className="mb-10">
@@ -892,6 +915,17 @@ async function RegionPage({
               </Suspense>
               <div className="md:grow">
                 <div className="pb-8 md:pb-16">
+                  <div className="mb-6">
+                    <AlerteSignup
+                      source={`liste/${categorie}/${region}`}
+                      criteres={{
+                        categories: TYPE_MARCHE_SLUGS.has(categorie) ? [] : [categorie],
+                        types: TYPE_MARCHE_SLUGS.has(categorie) ? [categorie as 'travaux' | 'fournitures' | 'services'] : [],
+                        regions: [region],
+                      }}
+                      contexte={`${(categorieLabel ?? categorie).toLowerCase()} en ${regionLabel}`}
+                    />
+                  </div>
                   {count > 0 && (
                     <div className="flex justify-end mb-4">
                       <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offre</span>

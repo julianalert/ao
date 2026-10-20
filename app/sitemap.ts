@@ -8,6 +8,8 @@ import { getAllPosts, getPostsByAuthor, getPostsByCategory } from '@/lib/blog/po
 import { AUTHORS, CATEGORIES, categoryHref } from '@/lib/blog/config'
 import { OUTILS } from '@/lib/outils/catalog'
 import { INDICES, indiceHref } from '@/lib/indices-catalog'
+import { PIECES_AVEC_PAGE, pieceHref } from '@/lib/outils/pieces'
+import { acheteurHref, acheteursIndex } from '@/lib/decp/marches'
 
 export const revalidate = 3600
 
@@ -71,6 +73,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   entries.push({ url: `${siteUrl}/outils`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 })
   for (const outil of OUTILS) {
     entries.push({ url: `${siteUrl}${outil.href}`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 })
+  }
+
+  // Lot 2 : seuils, pièces de candidature, acheteurs publics (fiches indexées dès 5 marchés)
+  entries.push({ url: `${siteUrl}/seuils-marches-publics`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 })
+  for (const piece of PIECES_AVEC_PAGE) {
+    entries.push({ url: `${siteUrl}${pieceHref(piece.slug)}`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 })
+  }
+  entries.push({ url: `${siteUrl}/acheteurs`, lastModified: now, changeFrequency: 'weekly', priority: 0.6 })
+  for (const a of await acheteursIndex(5)) {
+    entries.push({
+      url: `${siteUrl}${acheteurHref(a.nom, a.acheteur_id)}`,
+      lastModified: a.dernier_marche ?? now,
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    })
   }
 
   // Index BT / TP (INSEE, mis à jour chaque mois)

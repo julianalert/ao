@@ -1,5 +1,5 @@
 // Mapping des codes département INSEE vers région (slug + label)
-const DEPT_TO_REGION: Record<string, { region: string; region_label: string }> = {
+export const DEPT_TO_REGION: Record<string, { region: string; region_label: string }> = {
   '01': { region: 'auvergne-rhone-alpes', region_label: 'Auvergne-Rhône-Alpes' },
   '03': { region: 'auvergne-rhone-alpes', region_label: 'Auvergne-Rhône-Alpes' },
   '07': { region: 'auvergne-rhone-alpes', region_label: 'Auvergne-Rhône-Alpes' },

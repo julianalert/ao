@@ -1,6 +1,7 @@
 import { getLatestAppelsOffre, type AoFilters } from '@/lib/getAppelsOffre'
 import AoItem from './ao-item'
 import Pagination from '@/components/pagination'
+import AlerteSignup from '@/components/alertes/alerte-signup'
 
 interface AoListProps {
   filters?: AoFilters
@@ -30,6 +31,10 @@ export default async function AoList({ filters = {} }: AoListProps) {
       </div>
 
       <Pagination currentPage={page} totalPages={totalPages} basePath="/" />
+
+      <div className="mt-10">
+        <AlerteSignup source="accueil" />
+      </div>
     </div>
   )
 }

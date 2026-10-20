@@ -49,8 +49,8 @@ function DropdownMenu({ label, href, items, links, allLabel }: {
         </svg>
       </Link>
       <div className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 transition duration-150 absolute left-0 top-full pt-2 z-40">
-        <div className="w-[24rem] rounded-2xl border border-gray-200 bg-white p-2 shadow-xl shadow-blue-900/10">
-          <ul>
+        <div className={`${items.length > 4 ? 'w-[44rem]' : 'w-[24rem]'} rounded-2xl border border-gray-200 bg-white p-2 shadow-xl shadow-blue-900/10`}>
+          <ul className={items.length > 4 ? 'grid grid-cols-2' : undefined}>
             {items.map((item) => (
               <li key={item.href}>
                 <Link href={item.href} className="group/item flex gap-3 rounded-xl p-3 transition hover:bg-blue-50">

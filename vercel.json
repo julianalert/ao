@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/boamp?days=1",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/alertes",
+      "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/decp",
+      "schedule": "0 7 * * *"
     }
   ]
 }

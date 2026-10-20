@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   compensationTechnique, concurrentsHypothese, duelAuPrix, METHODES, noterCandidats, prixPourPasserPremier,
   type Candidat, type Methode, type ParamsNotation, type PrixPremier,
@@ -31,6 +31,17 @@ export default function NotePrixSimulator({ intro }: { intro: ReactNode }) {
   const [hypDispersion, setHypDispersion] = useState('10')
   const [hypNote, setHypNote] = useState(String(EX.moi.noteTech))
   const [ecart, setEcart] = useState('5')
+
+  // Pré-remplissage depuis l'analyseur de RC (?methode=…&poids=…&nmax=…)
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search)
+    const m = sp.get('methode')
+    if (m && METHODES.some((x) => x.value === m)) setMethode(m as Methode)
+    const poids = Number(sp.get('poids'))
+    if (poids > 0 && poids <= 100) setPoidsPrix(String(poids))
+    const n = Number(sp.get('nmax'))
+    if (n === 10 || n === 20 || n === 100) setNmax(n)
+  }, [])
 
   const params: ParamsNotation = {
     methode,

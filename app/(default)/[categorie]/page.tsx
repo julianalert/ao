@@ -8,6 +8,7 @@ import Link from 'next/link'
 import SidebarWrapper from '@/components/sidebar-wrapper'
 import AoItem from '../ao-item'
 import Pagination from '@/components/pagination'
+import AlerteSignup from '@/components/alertes/alerte-signup'
 
 const TYPE_MARCHE_LABELS: Record<string, string> = {
   travaux: 'Travaux',
@@ -108,6 +109,16 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
 
               <div className="md:grow">
                 <div className="pb-8 md:pb-16">
+                  <div className="mb-6">
+                    <AlerteSignup
+                      source={`liste/${categorie}`}
+                      criteres={{
+                        categories: TYPE_MARCHE_SLUGS.has(categorie) ? [] : [categorie],
+                        types: TYPE_MARCHE_SLUGS.has(categorie) ? [categorie as 'travaux' | 'fournitures' | 'services'] : [],
+                      }}
+                      contexte={label.toLowerCase()}
+                    />
+                  </div>
                   {count > 0 && (
                     <div className="flex justify-end mb-4">
                       <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offre</span>
