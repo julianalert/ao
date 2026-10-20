@@ -6,6 +6,8 @@ import {
 } from '@/lib/sitemap'
 import { getAllPosts, getPostsByAuthor } from '@/lib/blog/posts'
 import { AUTHORS } from '@/lib/blog/config'
+import { OUTILS } from '@/lib/outils/catalog'
+import { INDICES, indiceHref } from '@/lib/indices-catalog'
 
 export const revalidate = 3600
 
@@ -52,6 +54,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: getPostsByAuthor(author)[0]?.updatedAt ?? now,
       changeFrequency: 'monthly',
       priority: 0.4,
+    })
+  }
+
+  // Outils gratuits : hub + pages outils
+  entries.push({ url: `${siteUrl}/outils`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 })
+  for (const outil of OUTILS) {
+    entries.push({ url: `${siteUrl}${outil.href}`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 })
+  }
+
+  // Index BT / TP (INSEE, mis à jour chaque mois)
+  entries.push({ url: `${siteUrl}/indices`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 })
+  for (const indice of INDICES) {
+    entries.push({
+      url: `${siteUrl}${indiceHref(indice.code)}`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: indice.arretee ? 0.3 : 0.6,
     })
   }
 

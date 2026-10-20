@@ -71,6 +71,120 @@ export function WebSiteJsonLd() {
   )
 }
 
+// ─── Outils : WebApplication + FAQPage ────────────────────────────────────────
+
+type ToolJsonLdProps = {
+  name: string
+  description: string
+  path: string
+  dateModified: string
+  faq: { q: string; a: string }[]
+  author: { name: string; url: string }
+}
+
+export function ToolJsonLd({ name, description, path, dateModified, faq, author }: ToolJsonLdProps) {
+  const url = `${siteUrl}${path}`
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        '@id': `${url}#app`,
+        name,
+        description,
+        url,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        inLanguage: 'fr-FR',
+        isAccessibleForFree: true,
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        dateModified,
+        author: { '@type': 'Person', name: author.name, url: author.url },
+        publisher: { '@id': `${siteUrl}/#organization` },
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+// ─── Hub outils : CollectionPage ──────────────────────────────────────────────
+
+export function ToolsHubJsonLd({ tools }: { tools: { name: string; href: string; description: string }[] }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Outils gratuits pour les marchés publics',
+    url: `${siteUrl}/outils`,
+    inLanguage: 'fr-FR',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: tools.map((t, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        url: `${siteUrl}${t.href}`,
+        name: t.name,
+        description: t.description,
+      })),
+    },
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+// ─── Index INSEE : Dataset ────────────────────────────────────────────────────
+
+export function IndiceDatasetJsonLd({ code, label, path, description, dateModified, inseeUrl }: {
+  code: string
+  label: string
+  path: string
+  description: string
+  dateModified: string | null
+  inseeUrl: string
+}) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: `Index ${code} : ${label}`,
+    description,
+    url: `${siteUrl}${path}`,
+    inLanguage: 'fr-FR',
+    isAccessibleForFree: true,
+    ...(dateModified ? { dateModified } : {}),
+    creator: { '@type': 'Organization', name: 'Insee', url: 'https://www.insee.fr' },
+    isBasedOn: inseeUrl,
+    license: 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
+    temporalCoverage: '2014-10/..',
+    variableMeasured: `Index ${code} (base 2010)`,
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
 // ─── Blog ──────────────────────────────────────────────────────────────────────
 
 
