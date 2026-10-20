@@ -1,6 +1,17 @@
 // Graphiques chiffrés des articles : HTML/CSS, texte indexable, tableau accessible.
 
 const eur = (n: number) => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n)} €`
+const keur = (n: number) => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(n / 1000)} k€`
+
+// Étiquette de barre : montant complet sur grand écran, en k€ sur mobile
+function BarLabel({ full, short }: { full: string; short: string }) {
+  return (
+    <span className="mb-1 text-[10px] font-semibold whitespace-nowrap text-gray-800 sm:text-[11px]">
+      <span className="sm:hidden">{short}</span>
+      <span className="hidden sm:inline">{full}</span>
+    </span>
+  )
+}
 
 // ─── Article « Coût d'une réponse » : arbre de calcul ─────────────────────────
 
@@ -84,6 +95,7 @@ export function CostByWinRate({ caption }: { caption?: string }) {
       rate,
       cost,
       label: `${exact ? '' : '≈ '}${eur(exact ? cost : Math.round(cost / 100) * 100)}`,
+      short: `${exact ? '' : '≈ '}${keur(exact ? cost : Math.round(cost / 100) * 100)}`,
       loss: cost > MARGIN,
     }
   })
@@ -113,8 +125,8 @@ export function CostByWinRate({ caption }: { caption?: string }) {
           {/* Barres */}
           <div className="absolute inset-0 left-10 flex items-end justify-around gap-2">
             {rows.map((r) => (
-              <div key={r.rate} className="group relative flex h-full w-full max-w-14 flex-col items-center justify-end" title={`Taux de réussite ${Math.round(r.rate * 100)} % : ${r.label} par marché gagné`}>
-                <span className="mb-1 text-[11px] font-semibold whitespace-nowrap text-gray-800">{r.label}</span>
+              <div key={r.rate} className="group relative flex h-full w-full min-w-0 max-w-14 flex-col items-center justify-end" title={`Taux de réussite ${Math.round(r.rate * 100)} % : ${r.label} par marché gagné`}>
+                <BarLabel full={r.label} short={r.short} />
                 <div
                   className={`w-full rounded-t ${r.loss ? 'bg-red-400' : 'bg-emerald-500'} transition group-hover:opacity-80`}
                   style={{ height: `${(r.cost / Y_MAX) * 100}%` }}
@@ -126,7 +138,7 @@ export function CostByWinRate({ caption }: { caption?: string }) {
         {/* Axe X */}
         <div className="ml-10 flex justify-around gap-2 border-t border-gray-300 pt-2" aria-hidden="true">
           {rows.map((r) => (
-            <div key={r.rate} className="w-full max-w-14 text-center">
+            <div key={r.rate} className="w-full min-w-0 max-w-14 text-center">
               <p className="text-xs font-semibold text-gray-700">{Math.round(r.rate * 100)} %</p>
               <p className={`text-[10px] font-medium ${r.loss ? 'text-red-600' : 'text-emerald-700'}`}>{r.loss ? '✕ perte' : '✓ bénéfice'}</p>
             </div>
@@ -180,7 +192,7 @@ const SCALE = {
         lines: ['Avis publié aux deux endroits.', 'Visible par toute veille sérieuse.'],
       },
     ],
-    note: 'Montants HT, appréciés sur la valeur totale de l\'opération.',
+    note: 'Montants HT, appréciés sur la valeur totale de l\'opération. Règles de l\'État et des collectivités (art. R2131-12) ; seuil de dispense des travaux à 140 000 € HT au 1er janvier 2027.',
   },
   procedure: {
     title: 'Procédure applicable à un lot de travaux',
@@ -203,7 +215,7 @@ const SCALE = {
         lines: ['Appel d\'offres, procédure avec négociation…', 'Délais minimaux fixés par le Code.'],
       },
     ],
-    note: 'Le seuil se compare à la valeur totale de l\'opération, tous lots compris, pas au montant de votre lot. Exception : les petits lots.',
+    note: 'Le seuil se compare à la valeur totale de l\'opération, tous lots compris, pas au montant de votre lot. Exception : les petits lots. Dispense à 140 000 € HT au 1er janvier 2027.',
   },
 }
 
@@ -263,8 +275,8 @@ export function ThresholdHistory({ steps, caption, subtitle }: { steps: Threshol
           ))}
           <div className="absolute inset-0 left-10 flex items-end justify-around gap-1.5 sm:gap-3">
             {steps.map((s) => (
-              <div key={s.date} className="flex h-full w-full max-w-16 flex-col items-center justify-end" title={`${s.date} : ${eur(s.value)} HT. ${s.text}`}>
-                <span className="mb-1 text-[10px] font-semibold whitespace-nowrap text-gray-800 sm:text-[11px]">{eur(s.value)}</span>
+              <div key={s.date} className="flex h-full w-full min-w-0 max-w-16 flex-col items-center justify-end" title={`${s.date} : ${eur(s.value)} HT. ${s.text}`}>
+                <BarLabel full={eur(s.value)} short={keur(s.value)} />
                 <div
                   className={`w-full rounded-t ${
                     s.future
@@ -281,7 +293,7 @@ export function ThresholdHistory({ steps, caption, subtitle }: { steps: Threshol
         </div>
         <div className="ml-10 flex justify-around gap-1.5 border-t border-gray-300 pt-2 sm:gap-3" aria-hidden="true">
           {steps.map((s) => (
-            <p key={s.date} className="w-full max-w-16 text-center text-[10px] leading-tight font-semibold text-gray-700 sm:text-[11px]">{s.date}</p>
+            <p key={s.date} className="w-full min-w-0 max-w-16 text-center text-[10px] leading-tight font-semibold text-gray-700 sm:text-[11px]">{s.date}</p>
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-4 text-[11px] text-gray-600" aria-hidden="true">
@@ -306,5 +318,26 @@ export function ThresholdHistory({ steps, caption, subtitle }: { steps: Threshol
       </div>
       {caption && <figcaption className="mt-3 text-center text-sm leading-6 text-gray-500">{caption}</figcaption>}
     </figure>
+  )
+}
+
+// Historique vérifié (DAJ, marche-public.fr, octobre 2026)
+const DISPENSE_STEPS: ThresholdStep[] = [
+  { date: 'Avant oct. 2015', value: 15_000, text: 'Seuil historique de dispense.' },
+  { date: 'Oct. 2015', value: 25_000, text: 'Décret n° 2015-1163, en vigueur le 1er octobre 2015.' },
+  { date: 'Janv. 2020', value: 40_000, text: 'Décret n° 2019-1344, en vigueur le 1er janvier 2020.' },
+  { date: 'Juil. 2020', value: 70_000, text: 'Décret n° 2020-893, mesure temporaire (jusqu\'au 10 juillet 2021).', temporary: true },
+  { date: 'Déc. 2020', value: 100_000, text: 'Loi ASAP, art. 142 : temporaire jusqu\'à fin 2022, puis prorogé jusqu\'à fin 2024 (décret 2022-1683) et fin 2025 (décret 2024-1217).', temporary: true },
+  { date: 'Janv. 2026', value: 100_000, text: 'Décret n° 2025-1386 : inscrit durablement dans le Code (art. R2122-8).' },
+  { date: 'Janv. 2027', value: 140_000, text: 'Loi n° 2026-403, art. 13 : aligné sur le seuil européen des fournitures et services de l\'État.', future: true },
+]
+
+export function DispenseHistory({ caption }: { caption?: string }) {
+  return (
+    <ThresholdHistory
+      steps={DISPENSE_STEPS}
+      caption={caption}
+      subtitle="Montants HT, 2015-2027 · décrets 2015-1163, 2019-1344, 2020-893, loi ASAP, décret 2025-1386, loi 2026-403"
+    />
   )
 }
