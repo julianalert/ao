@@ -210,6 +210,15 @@ export async function marchesAcheteur(siret: string, depuis: string): Promise<Ma
 
 export type AcheteurIndex = { acheteur_id: string; nom: string | null; departement: string | null; commune: string | null; categorie: string | null; nb_marches: number; dernier_marche: string | null }
 
+/** L'acheteur a-t-il des marchés attribués en base ? (null si absent ou base non importée) */
+export async function acheteurIndexe(siret: string): Promise<AcheteurIndex | null> {
+  const sb = getSupabase()
+  if (!sb || !/^\d{14}$/.test(siret)) return null
+  const { data, error } = await sb.from('acheteurs_index').select('*').eq('acheteur_id', siret).maybeSingle()
+  if (error) return null
+  return data as AcheteurIndex | null
+}
+
 /** Acheteurs ayant au moins `min` marchés (vue matérialisée, base importée uniquement). */
 export async function acheteursIndex(min = 5, limit = 50000): Promise<AcheteurIndex[]> {
   const sb = getSupabase()

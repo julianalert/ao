@@ -1,9 +1,14 @@
 export const revalidate = 3600
+// Les chiffres du segment (lib/stats-segment.ts) se calculent en quelques secondes à froid
+export const maxDuration = 60
 export const dynamicParams = true
 
 import { Suspense } from 'react'
-import { getAppelsOffreByCategorie, getCategorieLabel, getRegionsByCategorie, TYPE_MARCHE_SLUGS, type AoFilters } from '@/lib/getAppelsOffre'
+import { getAppelsOffreByCategorie, getCategorieLabel, TYPE_MARCHE_SLUGS, type AoFilters } from '@/lib/getAppelsOffre'
 import { minusculeInitiale } from '@/lib/format'
+import { getStatsSegment, SEUIL_INDEXATION } from '@/lib/stats-segment'
+import { regionLabel } from '@/lib/alertes/geo'
+import SegmentStats from '@/components/segment-stats'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import SidebarWrapper from '@/components/sidebar-wrapper'
@@ -18,8 +23,13 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { categorie } = await params
-  const label = minusculeInitiale(await getCategorieLabel(categorie))
+  const [label, stats] = await Promise.all([
+    getCategorieLabel(categorie).then(minusculeInitiale),
+    getStatsSegment({ categorie }),
+  ])
   return {
+    // Catégorie quasi vide sur 12 mois : page trop mince pour être indexée
+    ...(stats && stats.publies < SEUIL_INDEXATION ? { robots: { index: false, follow: true } } : {}),
     title: `Appels d'offres ${label}, mis à jour chaque jour`,
     description: `Les appels d'offres publics ${label} publiés au BOAMP, mis à jour chaque matin : acheteur, date limite, montant estimé et accès au dossier. Gratuit, sans inscription.`,
     alternates: { canonical: `/${categorie}` },
@@ -38,13 +48,16 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
     page: sp.page ? parseInt(sp.page) : 1,
   }
 
-  const [result, regions, label] = await Promise.all([
+  const [result, stats, label] = await Promise.all([
     getAppelsOffreByCategorie(categorie, filters),
-    getRegionsByCategorie(categorie),
+    getStatsSegment({ categorie }),
     getCategorieLabel(categorie),
   ])
 
   const { data: appelsOffre, count, totalPages, page } = result
+  const regions = Object.entries(stats?.parRegion ?? {})
+    .map(([region, nb]) => ({ region, label: regionLabel(region), nb }))
+    .sort((a, b) => b.nb - a.nb)
 
   return (
     <>
@@ -62,22 +75,24 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
               Appels d'offres {minusculeInitiale(label)}
             </h1>
             <p className="text-lg text-gray-500 mb-6">
-              {count > 0
-                ? `${count.toLocaleString('fr-FR')} marchés publics, mis à jour quotidiennement.`
-                : 'Aucun marché public dans cette catégorie pour le moment.'}
+              {stats && stats.publies > 0
+                ? `${stats.ouverts.toLocaleString('fr-FR')} ouverts aujourd'hui, ${stats.publies30j.toLocaleString('fr-FR')} publiés ces 30 derniers jours. Mis à jour chaque matin depuis le BOAMP.`
+                : count > 0
+                  ? `${count.toLocaleString('fr-FR')} marchés publics, mis à jour chaque matin depuis le BOAMP.`
+                  : 'Aucun marché public dans cette catégorie pour le moment.'}
             </p>
 
             {/* Liens régions */}
             {regions.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {regions.slice(0, 12).map((r) => (
+                {regions.map((r) => (
                   <Link
                     key={r.region}
                     href={`/${categorie}/${r.region}`}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600 transition shadow-xs"
                   >
-                    {r.region_label}
-                    <span className="text-xs text-gray-400">{r.count}</span>
+                    {r.label}
+                    <span className="text-xs text-gray-400">{r.nb}</span>
                   </Link>
                 ))}
               </div>
@@ -138,6 +153,8 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
           </div>
         </div>
       </section>
+
+      {stats && stats.publies >= SEUIL_INDEXATION && <SegmentStats stats={stats} label={minusculeInitiale(label)} />}
     </>
   )
 }

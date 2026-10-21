@@ -29,7 +29,10 @@ export default async function Home({ searchParams }: PageProps) {
     page: params.page ? parseInt(params.page) : 1,
   }
 
-  const chiffres = await getChiffresAccueil()
+  const chiffres = await getChiffresAccueil().catch((err) => {
+    console.error('chiffres accueil :', err)
+    return null
+  })
 
   return (
     <>

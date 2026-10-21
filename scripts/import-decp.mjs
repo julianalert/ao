@@ -1,5 +1,6 @@
 // Import des marchés attribués (DECP) dans la table `marches_attribues`.
-// Usage : node --env-file=.env.local scripts/import-decp.mjs [--depuis=2023-10-20] [--concurrence=6]
+// Usage : node --env-file=.env.local scripts/import-decp.mjs [--depuis=2023-10-20] [--concurrence=6] [--page=1]
+// --page : reprendre un import interrompu à cette page (les pages déjà faites sont réécrites sans doublon)
 // Par défaut : marchés notifiés depuis 3 ans, versions actuelles uniquement (≈ 1 million de lignes).
 import { mapperLigne, pageTabulaire } from '../lib/decp/mapping.mjs'
 
@@ -33,16 +34,30 @@ const { total } = await pageTabulaire(params, 1, 1)
 const pages = Math.ceil(total / 200)
 console.log(`${total} lignes à importer depuis le ${depuis} (${pages} pages, ${concurrence} en parallèle)`)
 
-let suivante = 1
-let faites = 0
+// L'API tabulaire de data.gouv sature parfois (« Timed out acquiring connection ») : on réessaie
+async function avecReessais(etape, fn, essais = 6) {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (i >= essais) throw err
+      const attente = Math.min(60, 5 * 2 ** (i - 1))
+      console.warn(`${etape} : ${String(err.message).slice(0, 120)} — nouvel essai dans ${attente} s`)
+      await new Promise((r) => setTimeout(r, attente * 1000))
+    }
+  }
+}
+
+let suivante = Number(arg('page', 1))
+let faites = suivante - 1
 let lignes = 0
 const debut = Date.now()
 async function ouvrier() {
   while (suivante <= pages) {
     const page = suivante++
-    const { rows } = await pageTabulaire(params, page, 200)
+    const { rows } = await avecReessais(`page ${page}`, () => pageTabulaire(params, page, 200))
     const mappees = rows.map(mapperLigne).filter(Boolean)
-    await upsert(mappees)
+    await avecReessais(`enregistrement page ${page}`, () => upsert(mappees))
     faites++
     lignes += mappees.length
     if (faites % 25 === 0 || faites === pages) {

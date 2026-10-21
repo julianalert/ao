@@ -9,12 +9,13 @@
 | `20261020_03_analyse_rc.sql` | 5. Analyseur de RC (journal + bucket `dce-temp`) |
 | `20261020_04_marches_attribues.sql` | 8. Qui gagne quoi, fiches acheteurs |
 | `20261021_05_nature_avis.sql` | Type d'avis BOAMP : sitemap et indexation limités aux appels d'offres ouverts |
+| `20261022_06_index_acheteurs.sql` | Délai du rôle serveur pour rafraîchir l'index des acheteurs (après l'import DECP) |
 
 Puis, depuis la racine du projet :
 
 ```bash
 node --env-file=.env.local scripts/seed-seuils.mjs      # charge data/seuils.json dans la table seuils
-node --env-file=.env.local scripts/import-decp.mjs      # ≈ 1 million de marchés sur 3 ans, 30 à 60 min
+node --env-file=.env.local scripts/import-decp.mjs      # 3 ans par défaut (≈ 1 million de marchés) ; --depuis=AAAA-MM-JJ pour moins
 node --env-file=.env.local scripts/backfill-date-limite.mjs  # dates limites manquantes (procédures restreintes et négociées)
 node --env-file=.env.local scripts/backfill-nature-avis.mjs  # type d'avis des fiches existantes, après 20261021_05
 ```

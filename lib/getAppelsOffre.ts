@@ -174,6 +174,37 @@ export async function getAppelsOffreByRegion(
   return toPaginatedResult(data as unknown as AppelOffre[], count, page)
 }
 
+// ─── By département ───────────────────────────────────────────────────────────
+
+/** `codes` : écritures du code en base (voir codesEnBase dans lib/departements.ts). */
+export async function getAppelsOffreByDepartement(
+  categorie: string,
+  codes: string[],
+  filters: AoFilters = {},
+): Promise<PaginatedResult> {
+  const sb = getSupabase()
+  if (!sb) return EMPTY_PAGE(filters.page)
+
+  const page = filters.page ?? 1
+  const [from, to] = paginatedRange(page)
+
+  let q = sb
+    .from('appels_offre')
+    .select(COLONNES_LISTE, { count: 'exact' })
+    .eq('nature', NATURE_APPEL_OFFRE)
+    .in('departement', codes)
+    .order('date_publication', { ascending: false })
+    .range(from, to)
+
+  q = TYPE_MARCHE_SLUGS.has(categorie) ? q.eq('type_marche', categorie) : q.eq('categorie', categorie)
+  if (filters.procedure) q = q.eq('procedure', filters.procedure)
+  if (filters.date_limite) q = q.lte('date_limite', new Date(filters.date_limite).toISOString())
+
+  const { data, error, count } = await q
+  if (error) { console.error('getAppelsOffreByDepartement error:', error); return EMPTY_PAGE(page) }
+  return toPaginatedResult(data as unknown as AppelOffre[], count, page)
+}
+
 // ─── Detail ───────────────────────────────────────────────────────────────────
 
 export async function getAppelOffreById(id: number): Promise<AppelOffre | null> {
@@ -346,6 +377,10 @@ async function chiffresAccueil(): Promise<ChiffresAccueil> {
     sb.from('appels_offre').select('id', { count: 'exact', head: true }).eq('nature', NATURE_APPEL_OFFRE).gte('date_publication', semaine),
     ...METIERS_BTP.map((m) => ouverts().eq('categorie', m.categorie)),
   ])
+
+  // Une erreur n'est pas mise en cache par unstable_cache : on la lève plutôt que de figer des zéros
+  const echec = [tous, travaux, nouveaux, ...metiers].find((r) => r.error)
+  if (echec?.error) throw new Error(echec.error.message)
 
   return {
     ouverts: tous.count ?? 0,

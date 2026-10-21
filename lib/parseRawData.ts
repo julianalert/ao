@@ -195,11 +195,14 @@ function parseEFormsOrganizations(root: Record<string, unknown>): BoampAcheteur 
     const addr = (company['cac:PostalAddress'] ?? {}) as Record<string, unknown>
     const contact = (company['cac:Contact'] ?? {}) as Record<string, unknown>
 
+    // L'identifiant de l'organisation acheteuse est en général son SIRET
+    const identifiant = txt(((company['cac:PartyIdentification'] ?? {}) as Record<string, unknown>)['cbc:ID'])?.replace(/\s/g, '')
+
     return {
       nom,
       formeJuridique: null,
       activite: null,
-      siret: null,
+      siret: identifiant && /^\d{14}$/.test(identifiant) ? identifiant : null,
       contactNom: txt(contact['cbc:Name']),
       adresse: txt(addr['cbc:StreetName']),
       codePostal: txt(addr['cbc:PostalZone']),

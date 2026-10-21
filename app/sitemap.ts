@@ -9,6 +9,8 @@ import { PIECES_AVEC_PAGE, pieceHref } from '@/lib/outils/pieces'
 import { acheteurHref, acheteursIndex } from '@/lib/decp/marches'
 
 export const revalidate = 3600
+// Le fichier des pages agrège ~70 000 lignes et l'index des acheteurs : ~12 s à froid
+export const maxDuration = 60
 
 // Un fichier par lot : /sitemap/pages.xml (pages éditoriales, outils, catégories, régions)
 // puis /sitemap/ao-0.xml, /sitemap/ao-1.xml… (fiches AO). L'index, sur /sitemap.xml, est servi
@@ -46,7 +48,7 @@ async function pageEntries(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = SITE_URL
   const now = new Date().toISOString()
 
-  const { categories, categorieRegions } = await getCategoriesEtRegionsForSitemap()
+  const { categories, categorieRegions, categorieDepartements } = await getCategoriesEtRegionsForSitemap()
 
   const entries: MetadataRoute.Sitemap = [
     // Homepage
@@ -143,6 +145,16 @@ async function pageEntries(): Promise<MetadataRoute.Sitemap> {
   for (const { categorie, region } of categorieRegions) {
     entries.push({
       url: `${siteUrl}/${categorie}/${region}`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.6,
+    })
+  }
+
+  // Département pages (métiers du BTP): /:categorie/:departement-code
+  for (const { categorie, slug } of categorieDepartements) {
+    entries.push({
+      url: `${siteUrl}/${categorie}/${slug}`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.6,

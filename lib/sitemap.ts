@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getSupabase } from './supabase'
+import { getSupabase, lirePagine } from './supabase'
 import { NATURE_APPEL_OFFRE, seuilSansDateLimite } from './fiche-utile'
+import { METIERS_BTP } from './getAppelsOffre'
+import { departementDepuisCode } from './departements'
+import { SEUIL_INDEXATION } from './stats-segment'
 
 export type SitemapAo = {
   id: number
@@ -14,33 +17,8 @@ export type SitemapCategorieRegion = {
   region: string
 }
 
-// PostgREST renvoie au plus 1 000 lignes par requête : au-delà, il faut paginer avec range().
-const PAGE = 1000
-const REQUETES_PARALLELES = 8
-
 // Un fichier sitemap est limité à 50 000 URL ; on garde de la marge.
 export const AO_PAR_SITEMAP = 40_000
-
-type Lecture<T> = (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
-
-/** Lit les lignes [debut, fin[ par pages de 1 000, plusieurs pages à la fois. */
-async function lirePagine<T>(debut: number, fin: number, lire: Lecture<T>): Promise<T[]> {
-  const pages: number[] = []
-  for (let from = debut; from < fin; from += PAGE) pages.push(from)
-
-  const out: T[] = []
-  for (let i = 0; i < pages.length; i += REQUETES_PARALLELES) {
-    const lot = await Promise.all(
-      pages.slice(i, i + REQUETES_PARALLELES).map(async (from) => {
-        const { data, error } = await lire(from, Math.min(from + PAGE, fin) - 1)
-        if (error) throw new Error(error.message)
-        return data ?? []
-      }),
-    )
-    for (const rows of lot) out.push(...rows)
-  }
-  return out
-}
 
 /** La colonne `nature` existe-t-elle ? (migration 20261021_05_nature_avis.sql) */
 async function aColonneNature(sb: SupabaseClient): Promise<boolean> {
@@ -101,44 +79,73 @@ export async function getAosForSitemap(chunk: number): Promise<SitemapAo[]> {
 }
 
 /**
- * Catégories (slugs CPV et les trois types de marché) et couples catégorie × région
- * présents en base, en un seul parcours de la table.
+ * Pages de liste du sitemap, en un seul parcours de la table : catégories (slugs CPV et
+ * types de marché), couples catégorie × région et, pour les métiers du BTP, catégorie ×
+ * département. Seules celles qui comptent au moins SEUIL_INDEXATION avis de marché sur
+ * 12 mois y figurent ; les autres sont en noindex (lib/stats-segment.ts).
  */
 export async function getCategoriesEtRegionsForSitemap(): Promise<{
   categories: string[]
   categorieRegions: SitemapCategorieRegion[]
+  categorieDepartements: { categorie: string; slug: string }[]
 }> {
-  const categories = new Set<string>(['travaux', 'services', 'fournitures'])
-  const categorieRegions: SitemapCategorieRegion[] = []
-
+  const vide = { categories: ['travaux', 'services', 'fournitures'], categorieRegions: [], categorieDepartements: [] }
   const sb = getSupabase()
-  if (!sb) return { categories: Array.from(categories), categorieRegions }
+  if (!sb) return vide
 
-  const { count, error } = await sb.from('appels_offre').select('id', { count: 'exact', head: true })
-  if (error) { console.error('getCategoriesEtRegionsForSitemap error:', error); return { categories: Array.from(categories), categorieRegions } }
+  const debut = new Date(Date.now() - 365 * 86_400_000).toISOString()
+  const requete = (colonnes: string, compter = false) =>
+    sb
+      .from('appels_offre')
+      .select(colonnes, compter ? { count: 'exact', head: true } : undefined)
+      .eq('nature', NATURE_APPEL_OFFRE)
+      .gte('date_publication', debut)
 
-  let rows: { categorie: string | null; type_marche: string | null; region: string | null }[] = []
+  const { count, error } = await requete('id', true)
+  if (error) { console.error('getCategoriesEtRegionsForSitemap error:', error); return vide }
+
+  type Ligne = { categorie: string | null; type_marche: string | null; region: string | null; departement: string | null }
+  let rows: Ligne[] = []
   try {
-    rows = await lirePagine(0, count ?? 0, (from, to) =>
-      sb.from('appels_offre').select('categorie, type_marche, region').order('id', { ascending: true }).range(from, to),
-    )
+    rows = await lirePagine<Ligne>(0, count ?? 0, async (from, to) => {
+      const { data, error: e } = await requete('categorie, type_marche, region, departement').order('id', { ascending: true }).range(from, to)
+      return { data: data as Ligne[] | null, error: e }
+    })
   } catch (err) {
     console.error('getCategoriesEtRegionsForSitemap error:', err)
+    return vide
   }
 
-  const vus = new Set<string>()
+  const compter = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1)
+  const parCategorie = new Map<string, number>()
+  const parRegion = new Map<string, number>()
+  const parDepartement = new Map<string, number>()
+  const btp = new Set(['travaux', ...METIERS_BTP.map((m) => m.categorie)])
+
   for (const row of rows) {
-    if (row.categorie) categories.add(row.categorie)
-    if (!row.region) continue
-    // Chaque AO rend valides sa catégorie CPV et son type de marché
+    // Chaque AO compte pour sa catégorie CPV et pour son type de marché
     for (const cat of [row.categorie, row.type_marche]) {
       if (!cat) continue
-      const key = `${cat}|${row.region}`
-      if (vus.has(key)) continue
-      vus.add(key)
-      categorieRegions.push({ categorie: cat, region: row.region })
+      compter(parCategorie, cat)
+      if (row.region) compter(parRegion, `${cat}|${row.region}`)
+      const dep = btp.has(cat) ? departementDepuisCode(row.departement) : null
+      if (dep) compter(parDepartement, `${cat}|${dep.slug}`)
     }
   }
 
-  return { categories: Array.from(categories), categorieRegions }
+  const assez = ([, n]: [string, number]) => n >= SEUIL_INDEXATION
+  const categories = new Set(vide.categories)
+  for (const [cat] of Array.from(parCategorie).filter(assez)) categories.add(cat)
+
+  return {
+    categories: Array.from(categories),
+    categorieRegions: Array.from(parRegion).filter(assez).map(([k]) => {
+      const [categorie, region] = k.split('|')
+      return { categorie, region }
+    }),
+    categorieDepartements: Array.from(parDepartement).filter(assez).map(([k]) => {
+      const [categorie, slug] = k.split('|')
+      return { categorie, slug }
+    }),
+  }
 }

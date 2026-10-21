@@ -4,8 +4,9 @@ import { OUTILS } from '@/lib/outils/catalog'
 
 const nombre = (n: number) => n.toLocaleString('fr-FR')
 
-export default function Hero({ chiffres }: { chiffres: ChiffresAccueil }) {
-  const preuves = [
+export default function Hero({ chiffres }: { chiffres: ChiffresAccueil | null }) {
+  // Sans chiffres (base indisponible), le hero s'affiche sans compteurs
+  const preuves = !chiffres ? [] : [
     { valeur: nombre(chiffres.ouverts), label: "appels d'offres ouverts" },
     { valeur: nombre(chiffres.nouveauxSemaine), label: 'publiés ces 7 derniers jours' },
     { valeur: String(OUTILS.length), label: 'outils gratuits pour y répondre' },
@@ -26,7 +27,7 @@ export default function Hero({ chiffres }: { chiffres: ChiffresAccueil }) {
             Les appels d'offres publics, triés pour les entreprises du BTP
           </h1>
           <p className="text-lg text-gray-600 mb-7 max-w-3xl">
-            {nombre(chiffres.ouvertsTravaux)} marchés de travaux sont ouverts aujourd'hui. Trouvez ceux de votre métier et de votre
+            {chiffres && `${nombre(chiffres.ouvertsTravaux)} marchés de travaux sont ouverts aujourd'hui. `}Trouvez ceux de votre métier et de votre
             région, faites analyser le règlement de consultation en quelques minutes et décidez vite si vous répondez.
           </p>
 
@@ -39,7 +40,7 @@ export default function Hero({ chiffres }: { chiffres: ChiffresAccueil }) {
             </Link>
           </div>
 
-          {chiffres.metiers.length > 0 && (
+          {chiffres && chiffres.metiers.length > 0 && (
             <div className="mb-10">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Appels d'offres ouverts par métier
@@ -65,14 +66,16 @@ export default function Hero({ chiffres }: { chiffres: ChiffresAccueil }) {
             </div>
           )}
 
-          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {preuves.map((p) => (
-              <div key={p.label} className="flex flex-col-reverse justify-end rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-xs">
-                <dt className="text-xs text-gray-500 mt-0.5">{p.label}</dt>
-                <dd className="text-xl md:text-2xl font-extrabold text-gray-900">{p.valeur}</dd>
-              </div>
-            ))}
-          </dl>
+          {preuves.length > 0 && (
+            <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {preuves.map((p) => (
+                <div key={p.label} className="flex flex-col-reverse justify-end rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-xs">
+                  <dt className="text-xs text-gray-500 mt-0.5">{p.label}</dt>
+                  <dd className="text-xl md:text-2xl font-extrabold text-gray-900">{p.valeur}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
       </div>
     </section>

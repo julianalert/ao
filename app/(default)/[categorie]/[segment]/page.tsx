@@ -1,4 +1,6 @@
 export const revalidate = 3600
+// Les chiffres du segment (lib/stats-segment.ts) se calculent en quelques secondes à froid
+export const maxDuration = 60
 export const dynamicParams = true
 
 import React, { Suspense } from 'react'
@@ -6,9 +8,9 @@ import {
   getAppelOffreById,
   getAppelOffreByReference,
   getAppelsOffreByRegion,
+  getAppelsOffreByDepartement,
   getCategorieLabel,
   getSimilarAppelsOffre,
-  getRegionsByCategorie,
   TYPE_MARCHE_SLUGS,
   type AoFilters,
 } from '@/lib/getAppelsOffre'
@@ -22,7 +24,11 @@ import Pagination from '@/components/pagination'
 import { BreadcrumbJsonLd } from '@/components/json-ld'
 import AlerteSignup from '@/components/alertes/alerte-signup'
 import FavoriButton from '@/components/alertes/favori-button'
-import { departementLabel, normaliserDepartement, regionLabel as libelleRegion } from '@/lib/alertes/geo'
+import { departementLabel, normaliserDepartement, regionLabel as libelleRegion, REGIONS } from '@/lib/alertes/geo'
+import { codesEnBase, departementDepuisCode, departementDepuisSlug, departementHref, departementsDeRegion, libelleDepartement, type Departement } from '@/lib/departements'
+import { getStatsSegment, SEUIL_INDEXATION } from '@/lib/stats-segment'
+import { acheteurHref, acheteurIndexe } from '@/lib/decp/marches'
+import SegmentStats from '@/components/segment-stats'
 import { enRegion, minusculeInitiale, tronquer } from '@/lib/format'
 import { statutFiche, type StatutFiche } from '@/lib/fiche-utile'
 import { analysisCtaHref } from '@/lib/blog/config'
@@ -75,13 +81,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
-  const categorieLabel = minusculeInitiale(await getCategorieLabel(categorie))
-  const region = enRegion(libelleRegion(segment))
+  const dep = departementDepuisSlug(segment)
+  const [categorieLabel, stats] = await Promise.all([
+    getCategorieLabel(categorie).then(minusculeInitiale),
+    getStatsSegment(dep ? { categorie, departements: codesEnBase(dep.code) } : { categorie, region: segment }),
+  ])
+  const lieu = dep ? libelleDepartement(dep) : enRegion(libelleRegion(segment))
+  const titre = dep ? `Appels d'offres ${categorieLabel} – ${lieu}` : `Appels d'offres ${categorieLabel} ${lieu}`
 
   return {
-    title: `Appels d'offres ${categorieLabel} ${region}`,
-    description: `Les appels d'offres publics ${categorieLabel} ${region} publiés au BOAMP, mis à jour chaque matin : acheteur, date limite, montant estimé et accès au dossier. Gratuit, sans inscription.`,
+    title: titre,
+    description: `Les appels d'offres publics ${categorieLabel} ${dep ? `du département ${dep.code} (${dep.nom})` : lieu} publiés au BOAMP, mis à jour chaque matin : acheteur, date limite, montant estimé et accès au dossier. Gratuit, sans inscription.`,
     alternates: { canonical: `/${categorie}/${segment}` },
+    // Moins de SEUIL_INDEXATION AO sur 12 mois : page trop mince pour être indexée
+    ...(stats && stats.publies < SEUIL_INDEXATION ? { robots: { index: false, follow: true } } : {}),
   }
 }
 
@@ -152,6 +165,8 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
   const statut = statutFiche(ao)
   const nomAcheteur = acheteur?.nom ?? ao.acheteur
+  // Fiche acheteur (marchés attribués) si l'acheteur est connu en base, sinon recherche par nom
+  const ficheAcheteur = acheteur?.siret ? await acheteurIndexe(acheteur.siret) : null
   const annonceLiee = !statut.utile && statut.raison === 'autre-avis' && Array.isArray(ao.raw_data?.annonce_lie)
     ? await getAppelOffreByReference(String(ao.raw_data.annonce_lie[0]))
     : null
@@ -161,12 +176,14 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
     ? parsed.lots.flatMap((l) => l.criteria)
     : []
 
+  const dep = departementDepuisCode(ao.departement)
   const breadcrumbItems = [
     { name: 'Accueil', href: '/' },
     { name: categorieLabel, href: `/${categorie}` },
     ...(ao.region && ao.region_label
       ? [{ name: ao.region_label, href: `/${categorie}/${ao.region}` }]
       : []),
+    ...(dep ? [{ name: libelleDepartement(dep), href: departementHref(categorie, dep) }] : []),
     { name: ao.titre, href: `/${categorie}/${segment}` },
   ]
 
@@ -194,7 +211,14 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     {acheteur?.ville && (
                       <p className="text-xs text-gray-500 mt-1">{[acheteur.codePostal, acheteur.ville].filter(Boolean).join(' ')}</p>
                     )}
-                    {nomAcheteur && (
+                    {ficheAcheteur ? (
+                      <Link
+                        href={acheteurHref(ficheAcheteur.nom ?? nomAcheteur, ficheAcheteur.acheteur_id)}
+                        className="mt-2 inline-block text-xs font-medium text-blue-600 hover:underline"
+                      >
+                        Ses {ficheAcheteur.nb_marches} marchés attribués et leurs titulaires →
+                      </Link>
+                    ) : nomAcheteur && (
                       <Link
                         href={`/qui-gagne-quoi?acheteur=${encodeURIComponent(nomAcheteur)}`}
                         className="mt-2 inline-block text-xs font-medium text-blue-600 hover:underline"
@@ -383,6 +407,12 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                   <>
                     <span className="text-gray-300">/</span>
                     <Link className="text-blue-500 hover:underline" href={`/${categorie}/${ao.region}`}>{ao.region_label}</Link>
+                  </>
+                )}
+                {dep && (
+                  <>
+                    <span className="text-gray-300">/</span>
+                    <Link className="text-blue-500 hover:underline" href={departementHref(categorie, dep)}>{libelleDepartement(dep)}</Link>
                   </>
                 )}
               </div>
@@ -967,74 +997,104 @@ function FicheCloseBanner({ statut, ao, categorie, categorieLabel, annonceLiee }
   )
 }
 
-// ─── Region Page ──────────────────────────────────────────────────────────────
+// ─── Pages région et département ──────────────────────────────────────────────
 
-async function RegionPage({
-  categorie,
-  region,
-  sp,
-}: {
-  categorie: string
-  region: string
-  sp: Record<string, string>
-}) {
+type Lieu =
+  | { type: 'region'; region: string }
+  | { type: 'departement'; dep: Departement }
+
+const chipClass =
+  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600 transition shadow-xs'
+
+async function ListeLieuPage({ categorie, lieu, sp }: { categorie: string; lieu: Lieu; sp: Record<string, string> }) {
   const filters: AoFilters = {
     procedure: sp.procedure || undefined,
     date_limite: sp.date_limite || undefined,
     page: sp.page ? parseInt(sp.page) : 1,
   }
+  const region = lieu.type === 'region' ? lieu.region : lieu.dep.region
+  const codes = lieu.type === 'departement' ? codesEnBase(lieu.dep.code) : []
 
-  const [result, allRegions, categorieLabel] = await Promise.all([
-    getAppelsOffreByRegion(categorie, region, filters),
-    getRegionsByCategorie(categorie),
+  const [result, stats, statsCategorie, categorieLabel] = await Promise.all([
+    lieu.type === 'region'
+      ? getAppelsOffreByRegion(categorie, lieu.region, filters)
+      : getAppelsOffreByDepartement(categorie, codes, filters),
+    getStatsSegment(lieu.type === 'region' ? { categorie, region: lieu.region } : { categorie, departements: codes }),
+    getStatsSegment({ categorie }),
     getCategorieLabel(categorie),
   ])
 
   const { data: appelsOffre, count, totalPages, page } = result
+  const label = minusculeInitiale(categorieLabel)
+  const regionLabel = region ? libelleRegion(region) : null
+  const lieuLabel = lieu.type === 'region' ? (regionLabel ?? lieu.region) : libelleDepartement(lieu.dep)
+  const basePath = `/${categorie}/${lieu.type === 'region' ? lieu.region : lieu.dep.slug}`
 
-  const regionLabel = appelsOffre[0]?.region_label ?? libelleRegion(region)
+  // Liens vers les départements (page région) ou les autres départements de la région (page département)
+  const parDepartement = (lieu.type === 'region' ? stats : statsCategorie)?.parDepartement ?? {}
+  const departements = (region ? departementsDeRegion(region) : [])
+    .filter((d) => (parDepartement[d.code] ?? 0) > 0 && !(lieu.type === 'departement' && d.code === lieu.dep.code))
+    .map((d) => ({ d, nb: parDepartement[d.code] }))
+  const autresRegions = Object.entries(statsCategorie?.parRegion ?? {})
+    .filter(([r]) => r !== region)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
 
   const breadcrumbItems = [
     { name: 'Accueil', href: '/' },
-    { name: categorieLabel ?? categorie, href: `/${categorie}` },
-    { name: regionLabel, href: `/${categorie}/${region}` },
+    { name: categorieLabel, href: `/${categorie}` },
+    ...(region && regionLabel ? [{ name: regionLabel, href: `/${categorie}/${region}` }] : []),
+    ...(lieu.type === 'departement' ? [{ name: lieuLabel, href: basePath }] : []),
   ]
 
   return (
     <>
       <BreadcrumbJsonLd items={breadcrumbItems} />
-      {/* Hero région */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-b from-blue-100 to-white pointer-events-none -z-10" aria-hidden="true" />
         <div className="max-w-screen-2xl mx-auto px-6 sm:px-8">
           <div className="pt-28 pb-8 md:pt-36 md:pb-12">
             <div className="mb-3 flex items-center gap-1.5 text-sm flex-wrap">
-              <Link className="text-blue-500 hover:underline" href="/">Accueil</Link>
-              <span className="text-gray-300">/</span>
-              <Link className="text-blue-500 hover:underline" href={`/${categorie}`}>{categorieLabel}</Link>
-              <span className="text-gray-300">/</span>
-              <span className="text-gray-500">{regionLabel}</span>
+              {breadcrumbItems.map((b, i) => (
+                <React.Fragment key={b.href}>
+                  {i > 0 && <span className="text-gray-300">/</span>}
+                  {i < breadcrumbItems.length - 1
+                    ? <Link className="text-blue-500 hover:underline" href={b.href}>{b.name}</Link>
+                    : <span className="text-gray-500">{b.name}</span>}
+                </React.Fragment>
+              ))}
             </div>
             <h1 className="h1 font-inter mb-4">
-              Appels d'offres {minusculeInitiale(categorieLabel)} {enRegion(regionLabel)}
+              Appels d'offres {label} {lieu.type === 'region' ? enRegion(lieuLabel) : `– ${lieuLabel}`}
             </h1>
             <p className="text-lg text-gray-500 mb-6">
-              {count > 0
-                ? `${count.toLocaleString('fr-FR')} marchés publics, mis à jour quotidiennement.`
-                : 'Aucun marché public dans cette région pour le moment.'}
+              {stats && stats.publies > 0
+                ? `${stats.ouverts.toLocaleString('fr-FR')} ouverts aujourd'hui, ${stats.publies30j.toLocaleString('fr-FR')} publiés ces 30 derniers jours. Mis à jour chaque matin depuis le BOAMP.`
+                : count > 0
+                  ? `${count.toLocaleString('fr-FR')} marchés publics, mis à jour chaque matin depuis le BOAMP.`
+                  : 'Aucun marché public pour le moment.'}
             </p>
 
-            {/* Autres régions */}
-            {allRegions.length > 1 && (
+            {departements.length > 0 && (
+              <div className="flex flex-wrap gap-2 items-center mb-3">
+                <span className="text-sm text-gray-500 mr-1">
+                  {lieu.type === 'region' ? 'Par département :' : `Autres départements ${regionLabel ? enRegion(regionLabel) : ''} :`}
+                </span>
+                {departements.map(({ d, nb }) => (
+                  <Link key={d.code} href={departementHref(categorie, d)} className={chipClass}>
+                    {libelleDepartement(d)}
+                    <span className="text-xs text-gray-400">{nb}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {autresRegions.length > 0 && (
               <div className="flex flex-wrap gap-2 items-center">
                 <span className="text-sm text-gray-500 mr-1">Autres régions :</span>
-                {allRegions.filter((r) => r.region !== region).slice(0, 8).map((r) => (
-                  <Link
-                    key={r.region}
-                    href={`/${categorie}/${r.region}`}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600 transition shadow-xs"
-                  >
-                    {r.region_label}
+                {autresRegions.map(([r]) => (
+                  <Link key={r} href={`/${categorie}/${r}`} className={chipClass}>
+                    {libelleRegion(r)}
                   </Link>
                 ))}
               </div>
@@ -1053,17 +1113,19 @@ async function RegionPage({
               </Suspense>
               <div className="md:grow">
                 <div className="pb-8 md:pb-16">
-                  <div className="mb-6">
-                    <AlerteSignup
-                      source={`liste/${categorie}/${region}`}
-                      criteres={{
-                        categories: TYPE_MARCHE_SLUGS.has(categorie) ? [] : [categorie],
-                        types: TYPE_MARCHE_SLUGS.has(categorie) ? [categorie as 'travaux' | 'fournitures' | 'services'] : [],
-                        regions: [region],
-                      }}
-                      contexte={`${(categorieLabel ?? categorie).toLowerCase()} en ${regionLabel}`}
-                    />
-                  </div>
+                  {lieu.type === 'region' && (
+                    <div className="mb-6">
+                      <AlerteSignup
+                        source={`liste/${categorie}/${lieu.region}`}
+                        criteres={{
+                          categories: TYPE_MARCHE_SLUGS.has(categorie) ? [] : [categorie],
+                          types: TYPE_MARCHE_SLUGS.has(categorie) ? [categorie as 'travaux' | 'fournitures' | 'services'] : [],
+                          regions: [lieu.region],
+                        }}
+                        contexte={`${categorieLabel.toLowerCase()} en ${lieuLabel}`}
+                      />
+                    </div>
+                  )}
                   {count > 0 && (
                     <div className="flex justify-end mb-4">
                       <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offres</span>
@@ -1072,9 +1134,9 @@ async function RegionPage({
                   <div className="flex flex-col gap-3">
                     {appelsOffre.length === 0 ? (
                       <div className="py-16 text-center text-gray-400">
-                        <p className="text-lg mb-2">Aucun appel d'offres dans cette région.</p>
+                        <p className="text-lg mb-2">Aucun appel d'offres ici pour le moment.</p>
                         <Link className="text-blue-500 hover:underline" href={`/${categorie}`}>
-                          Voir tous les marchés {categorieLabel}
+                          Voir tous les appels d'offres {label}
                         </Link>
                       </div>
                     ) : (
@@ -1084,7 +1146,7 @@ async function RegionPage({
                   <Pagination
                     currentPage={page}
                     totalPages={totalPages}
-                    basePath={`/${categorie}/${region}`}
+                    basePath={basePath}
                     searchParams={Object.fromEntries(Object.entries(sp).filter(([k]) => k !== 'page'))}
                   />
                 </div>
@@ -1093,6 +1155,14 @@ async function RegionPage({
           </div>
         </div>
       </section>
+
+      {stats && stats.publies >= SEUIL_INDEXATION && (
+        <SegmentStats
+          stats={stats}
+          label={label}
+          lieu={lieu.type === 'region' ? enRegion(lieuLabel) : `dans le département ${lieu.dep.code} (${lieu.dep.nom})`}
+        />
+      )}
     </>
   )
 }
@@ -1106,5 +1176,8 @@ export default async function SegmentPage({ params, searchParams }: PageProps) {
   if (isAoSegment(segment)) {
     return <AoDetailPage categorie={categorie} segment={segment} />
   }
-  return <RegionPage categorie={categorie} region={segment} sp={sp} />
+  const dep = departementDepuisSlug(segment)
+  if (dep) return <ListeLieuPage categorie={categorie} lieu={{ type: 'departement', dep }} sp={sp} />
+  if (!REGIONS.some((r) => r.slug === segment)) notFound()
+  return <ListeLieuPage categorie={categorie} lieu={{ type: 'region', region: segment }} sp={sp} />
 }
