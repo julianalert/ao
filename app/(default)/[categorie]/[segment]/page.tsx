@@ -25,6 +25,7 @@ import FavoriButton from '@/components/alertes/favori-button'
 import { departementLabel, normaliserDepartement, regionLabel as libelleRegion } from '@/lib/alertes/geo'
 import { enRegion, minusculeInitiale, tronquer } from '@/lib/format'
 import { statutFiche, type StatutFiche } from '@/lib/fiche-utile'
+import { analysisCtaHref } from '@/lib/blog/config'
 import AoGuides from '@/components/blog/ao-guides'
 
 interface PageProps {
@@ -126,6 +127,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
     ao.categorie ?? categorie,
     ao.type_marche,
     ao.id,
+    ao.region,
   )
 
   const parsed = parseRawData(ao.raw_data)
@@ -149,6 +151,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
   const lieuExecution = parsed.lieuExecution ?? (ao.departement ? `Département ${ao.departement}` : null)
 
   const statut = statutFiche(ao)
+  const nomAcheteur = acheteur?.nom ?? ao.acheteur
   const annonceLiee = !statut.utile && statut.raison === 'autre-avis' && Array.isArray(ao.raw_data?.annonce_lie)
     ? await getAppelOffreByReference(String(ao.raw_data.annonce_lie[0]))
     : null
@@ -173,10 +176,11 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
     <section>
       <div className="max-w-screen-2xl mx-auto px-6 sm:px-8">
         <div className="pt-28 pb-8 md:pt-36 md:pb-16">
-          <div className="md:flex" data-sticky-container>
+          {/* Sur mobile, le contenu passe avant la colonne acheteur */}
+          <div className="flex flex-col md:flex-row" data-sticky-container>
 
             {/* ── Sidebar ── */}
-            <aside className="mb-8 md:mb-0 md:w-1/3 md:ml-10 lg:ml-14 md:shrink-0 md:order-1 md:self-start md:sticky md:top-8">
+            <aside className="order-1 mt-10 md:mt-0 md:w-1/3 md:ml-10 lg:ml-14 md:shrink-0 md:self-start md:sticky md:top-8">
                 <div className="bg-white rounded-xl border border-gray-200 shadow-xs p-5 space-y-5">
 
                   {/* Acheteur */}
@@ -189,6 +193,14 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     </h2>
                     {acheteur?.ville && (
                       <p className="text-xs text-gray-500 mt-1">{[acheteur.codePostal, acheteur.ville].filter(Boolean).join(' ')}</p>
+                    )}
+                    {nomAcheteur && (
+                      <Link
+                        href={`/qui-gagne-quoi?acheteur=${encodeURIComponent(nomAcheteur)}`}
+                        className="mt-2 inline-block text-xs font-medium text-blue-600 hover:underline"
+                      >
+                        Ses marchés attribués et leurs titulaires →
+                      </Link>
                     )}
                   </div>
 
@@ -389,6 +401,23 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
               <h1 className="text-2xl md:text-3xl font-extrabold font-inter mb-6 leading-tight">{ao.titre}</h1>
 
+              {/* Actions principales : sur mobile, la colonne acheteur passe en bas de page */}
+              {statut.utile && (
+                <div className="md:hidden mb-6 grid grid-cols-2 gap-2">
+                  <a
+                    className="btn-sm text-white bg-blue-500 hover:bg-blue-600 shadow-xs"
+                    href={ao.url_document ?? `https://www.boamp.fr/pages/avis/?q=idweb:${ao.reference}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {ao.url_document ? 'Accéder au dossier' : "Voir l'avis officiel"}
+                  </a>
+                  <Link className="btn-sm text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100" href={`/outils/analyse-rc?ao=${ao.id}`}>
+                    Analyser le RC
+                  </Link>
+                </div>
+              )}
+
               {!statut.utile && (
                 <FicheCloseBanner
                   statut={statut}
@@ -454,7 +483,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
                 {/* ── Section 1 : Acheteur (toujours visible) ── */}
                 <section>
-                  <SectionTitle>Section 1 — Acheteur</SectionTitle>
+                  <SectionTitle>Acheteur</SectionTitle>
                   <InfoTable rows={[
                     { label: 'Nom officiel', value: acheteur?.nom ?? ao.acheteur },
                     { label: 'SIRET', value: acheteur?.siret ?? ao.acheteur_siret },
@@ -486,7 +515,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
                 {/* ── Section 2 : Procédure ── */}
                 <section>
-                  <SectionTitle>Section 2 — Procédure</SectionTitle>
+                  <SectionTitle>Procédure</SectionTitle>
 
                   {/* Description complète */}
                   {(parsed.description || ao.objet) && (
@@ -620,7 +649,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                 {parsed.lots.length > 0 && (
                   <section>
                     <SectionTitle>
-                      Section 5 — Lots
+                      Lots
                       <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                         {parsed.lots.length} lot{parsed.lots.length > 1 ? 's' : ''}
                       </span>
@@ -724,6 +753,27 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                     </div>
                   )}
                 </section>
+
+                {/* ── Offre vision : analyse gratuite (seulement si on peut encore répondre) ── */}
+                {statut.utile && (
+                  <section className="no-print rounded-2xl border border-blue-100 bg-blue-50 p-5 xl:flex xl:items-center xl:justify-between xl:gap-6">
+                    <div>
+                      <p className="font-bold text-gray-900">Pas le temps de lire tout le dossier ?</p>
+                      <p className="mt-1 text-sm text-gray-600">
+                        vision analyse gratuitement 3 appels d'offres de votre métier, celui-ci compris si vous le souhaitez, et vous
+                        renvoie un avis go / no-go argumenté.
+                      </p>
+                    </div>
+                    <a
+                      href={analysisCtaHref(`fiche-ao-${ao.categorie ?? categorie}`, 'fiche-ao')}
+                      target="_blank"
+                      rel="noopener"
+                      className="btn-sm mt-4 xl:mt-0 shrink-0 text-white bg-blue-500 hover:bg-blue-600 shadow-xs"
+                    >
+                      Demander l'analyse →
+                    </a>
+                  </section>
+                )}
 
                 {/* ── Comment postuler (seulement si on peut encore répondre) ── */}
                 {statut.utile && (
@@ -837,7 +887,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
               {/* Marchés similaires */}
               {similaires.length > 0 && (
                 <div className="mb-10">
-                  <h2 className="text-2xl font-bold font-inter mb-6">Marchés similaires</h2>
+                  <h2 className="text-2xl font-bold font-inter mb-6">Appels d'offres similaires en cours</h2>
                   <div className="flex flex-col gap-3">
                     {similaires.map((s) => <AoItem key={s.id} {...s} />)}
                   </div>

@@ -8,9 +8,10 @@ export const metadata = {
 
 import { Suspense } from 'react'
 import Hero from '@/components/hero'
+import HomeSections from '@/components/home-sections'
 import SidebarWrapper from '@/components/sidebar-wrapper'
 import AoList from './ao-list'
-import type { AoFilters } from '@/lib/getAppelsOffre'
+import { getChiffresAccueil, type AoFilters } from '@/lib/getAppelsOffre'
 import { WebSiteJsonLd } from '@/components/json-ld'
 
 interface PageProps {
@@ -28,14 +29,19 @@ export default async function Home({ searchParams }: PageProps) {
     page: params.page ? parseInt(params.page) : 1,
   }
 
+  const chiffres = await getChiffresAccueil()
+
   return (
     <>
       <WebSiteJsonLd />
-      <Hero />
+      <Hero chiffres={chiffres} />
 
-      <section>
+      <section id="appels-offres" className="scroll-mt-20">
         <div className="max-w-screen-2xl mx-auto px-6 sm:px-8">
           <div className="py-8 md:py-12">
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-6">
+              Derniers appels d'offres publiés
+            </h2>
             <div className="md:flex" data-sticky-container>
 
               <Suspense fallback={<div className="mb-8 md:mb-0 md:w-1/3 md:mr-8 lg:mr-10 md:shrink-0" />}>
@@ -50,6 +56,8 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
         </div>
       </section>
+
+      <HomeSections />
     </>
   )
 }

@@ -1,5 +1,7 @@
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { getSupabase } from './supabase'
+import { NATURE_APPEL_OFFRE } from './fiche-utile'
 
 export const PAGE_SIZE = 20
 
@@ -68,6 +70,10 @@ function toPaginatedResult(
 
 const EMPTY_PAGE = (page = 1): PaginatedResult => toPaginatedResult([], 0, page)
 
+// Colonnes des listes : tout sauf raw_data (l'avis complet, volumineux), inutile pour une ligne
+const COLONNES_LISTE =
+  'id, reference, titre, slug, objet, acheteur, acheteur_siret, categorie, categorie_label, cpv_code, region, region_label, departement, type_marche, procedure, montant_estime, date_publication, date_limite, url_document, created_at'
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 export async function getLatestAppelsOffre(filters: AoFilters = {}): Promise<PaginatedResult> {
@@ -77,9 +83,11 @@ export async function getLatestAppelsOffre(filters: AoFilters = {}): Promise<Pag
   const page = filters.page ?? 1
   const [from, to] = paginatedRange(page)
 
+  // Listes : seulement les avis de marché, pas les attributions, rectificatifs, annulations…
   let q = sb
     .from('appels_offre')
-    .select('*', { count: 'exact' })
+    .select(COLONNES_LISTE, { count: 'exact' })
+    .eq('nature', NATURE_APPEL_OFFRE)
     .order('date_publication', { ascending: false })
     .range(from, to)
 
@@ -91,7 +99,7 @@ export async function getLatestAppelsOffre(filters: AoFilters = {}): Promise<Pag
 
   const { data, error, count } = await q
   if (error) { console.error('getLatestAppelsOffre error:', error); return EMPTY_PAGE(page) }
-  return toPaginatedResult(data as AppelOffre[], count, page)
+  return toPaginatedResult(data as unknown as AppelOffre[], count, page)
 }
 
 // ─── By category (type_marche or CPV categorie) ───────────────────────────────
@@ -108,7 +116,8 @@ export async function getAppelsOffreByCategorie(
 
   let q = sb
     .from('appels_offre')
-    .select('*', { count: 'exact' })
+    .select(COLONNES_LISTE, { count: 'exact' })
+    .eq('nature', NATURE_APPEL_OFFRE)
     .order('date_publication', { ascending: false })
     .range(from, to)
 
@@ -126,7 +135,7 @@ export async function getAppelsOffreByCategorie(
 
   const { data, error, count } = await q
   if (error) { console.error('getAppelsOffreByCategorie error:', error); return EMPTY_PAGE(page) }
-  return toPaginatedResult(data as AppelOffre[], count, page)
+  return toPaginatedResult(data as unknown as AppelOffre[], count, page)
 }
 
 // ─── By region ────────────────────────────────────────────────────────────────
@@ -144,7 +153,8 @@ export async function getAppelsOffreByRegion(
 
   let q = sb
     .from('appels_offre')
-    .select('*', { count: 'exact' })
+    .select(COLONNES_LISTE, { count: 'exact' })
+    .eq('nature', NATURE_APPEL_OFFRE)
     .order('date_publication', { ascending: false })
     .range(from, to)
     .eq('region', region)
@@ -161,7 +171,7 @@ export async function getAppelsOffreByRegion(
 
   const { data, error, count } = await q
   if (error) { console.error('getAppelsOffreByRegion error:', error); return EMPTY_PAGE(page) }
-  return toPaginatedResult(data as AppelOffre[], count, page)
+  return toPaginatedResult(data as unknown as AppelOffre[], count, page)
 }
 
 // ─── Detail ───────────────────────────────────────────────────────────────────
@@ -197,32 +207,51 @@ export async function getAppelOffreByReference(
   return data
 }
 
+/**
+ * Appels d'offres ouverts du même secteur, dans la même région d'abord, puis partout en
+ * France pour compléter.
+ */
 export async function getSimilarAppelsOffre(
   categorie: string,
   typeMarche: string | null,
   excludeId: number,
+  region: string | null = null,
   limit = 4,
 ): Promise<AppelOffre[]> {
   const sb = getSupabase()
   if (!sb) return []
 
-  let q = sb
-    .from('appels_offre')
-    .select('*')
-    .neq('id', excludeId)
-    .order('date_publication', { ascending: false })
-    .limit(limit)
-
-  if (TYPE_MARCHE_SLUGS.has(categorie)) {
-    q = q.eq('type_marche', categorie)
-  } else {
-    q = q.eq('categorie', categorie)
-    if (typeMarche) q = q.eq('type_marche', typeMarche)
+  const requete = (dansLaRegion: boolean) => {
+    let q = sb
+      .from('appels_offre')
+      .select(COLONNES_LISTE)
+      .eq('nature', NATURE_APPEL_OFFRE)
+      .gte('date_limite', new Date().toISOString())
+      .neq('id', excludeId)
+      .order('date_publication', { ascending: false })
+      .limit(limit)
+    if (TYPE_MARCHE_SLUGS.has(categorie)) {
+      q = q.eq('type_marche', categorie)
+    } else {
+      q = q.eq('categorie', categorie)
+      if (typeMarche) q = q.eq('type_marche', typeMarche)
+    }
+    return dansLaRegion && region ? q.eq('region', region) : q
   }
 
-  const { data, error } = await q
-  if (error) { console.error('getSimilarAppelsOffre error:', error); return [] }
-  return (data ?? []) as AppelOffre[]
+  const proches = region ? await requete(true) : { data: [], error: null }
+  if (proches.error) { console.error('getSimilarAppelsOffre error:', proches.error); return [] }
+  const resultat = (proches.data ?? []) as unknown as AppelOffre[]
+  if (resultat.length >= limit) return resultat
+
+  const { data, error } = await requete(false)
+  if (error) { console.error('getSimilarAppelsOffre error:', error); return resultat }
+  const dejaVus = new Set(resultat.map((a) => a.id))
+  for (const a of (data ?? []) as unknown as AppelOffre[]) {
+    if (resultat.length >= limit) break
+    if (!dejaVus.has(a.id)) resultat.push(a)
+  }
+  return resultat
 }
 
 // ─── Open AOs (blog) ──────────────────────────────────────────────────────────
@@ -237,6 +266,7 @@ export async function getOpenAppelsOffre(
   let q = sb
     .from('appels_offre')
     .select('id, slug, titre, categorie, categorie_label, acheteur, region_label, date_publication, date_limite, type_marche', { count: 'exact' })
+    .eq('nature', NATURE_APPEL_OFFRE)
     .gte('date_limite', new Date().toISOString())
     .order('date_publication', { ascending: false })
     .limit(limit)
@@ -255,11 +285,76 @@ export async function getAoStats(): Promise<{ total: number; open: number }> {
   if (!sb) return { total: 0, open: 0 }
 
   const [all, open] = await Promise.all([
-    sb.from('appels_offre').select('id', { count: 'exact', head: true }),
-    sb.from('appels_offre').select('id', { count: 'exact', head: true }).gte('date_limite', new Date().toISOString()),
+    sb.from('appels_offre').select('id', { count: 'exact', head: true }).eq('nature', NATURE_APPEL_OFFRE),
+    sb
+      .from('appels_offre')
+      .select('id', { count: 'exact', head: true })
+      .eq('nature', NATURE_APPEL_OFFRE)
+      .gte('date_limite', new Date().toISOString()),
   ])
   if (all.error || open.error) console.error('getAoStats error:', all.error ?? open.error)
   return { total: all.count ?? 0, open: open.count ?? 0 }
+}
+
+// ─── Accueil ──────────────────────────────────────────────────────────────────
+
+// Métiers du BTP mis en avant sur l'accueil (slugs de catégorie présents en base)
+export const METIERS_BTP: { categorie: string; label: string }[] = [
+  { categorie: 'batiment', label: 'Bâtiment' },
+  { categorie: 'gros-oeuvre', label: 'Gros œuvre' },
+  { categorie: 'tous-corps-d-etat', label: "Tous corps d'état" },
+  { categorie: 'electricite-travaux', label: 'Électricité' },
+  { categorie: 'plomberie-travaux', label: 'Plomberie' },
+  { categorie: 'chauffage-travaux', label: 'Chauffage' },
+  { categorie: 'menuiserie', label: 'Menuiserie' },
+  { categorie: 'couverture', label: 'Couverture' },
+  { categorie: 'charpente', label: 'Charpente' },
+  { categorie: 'maconnerie', label: 'Maçonnerie' },
+  { categorie: 'peinture-travaux', label: 'Peinture' },
+  { categorie: 'etancheite', label: 'Étanchéité' },
+  { categorie: 'voirie-et-reseaux-divers', label: 'VRD' },
+  { categorie: 'terrassement', label: 'Terrassement' },
+  { categorie: 'demolition', label: 'Démolition' },
+  { categorie: 'espaces-verts', label: 'Espaces verts' },
+]
+
+export type ChiffresAccueil = {
+  ouverts: number
+  ouvertsTravaux: number
+  nouveauxSemaine: number
+  metiers: { categorie: string; label: string; ouverts: number }[]
+}
+
+/**
+ * Appels d'offres ouverts (tous, travaux, par métier BTP) et publiés ces 7 derniers jours.
+ * L'accueil est rendu à chaque visite (filtres dans l'URL) : comptages mis en cache 1 h.
+ */
+export const getChiffresAccueil = unstable_cache(chiffresAccueil, ['chiffres-accueil'], { revalidate: 3600 })
+
+async function chiffresAccueil(): Promise<ChiffresAccueil> {
+  const sb = getSupabase()
+  if (!sb) return { ouverts: 0, ouvertsTravaux: 0, nouveauxSemaine: 0, metiers: [] }
+
+  const maintenant = new Date().toISOString()
+  const semaine = new Date(Date.now() - 7 * 86_400_000).toISOString()
+  const ouverts = () =>
+    sb.from('appels_offre').select('id', { count: 'exact', head: true }).eq('nature', NATURE_APPEL_OFFRE).gte('date_limite', maintenant)
+
+  const [tous, travaux, nouveaux, ...metiers] = await Promise.all([
+    ouverts(),
+    ouverts().eq('type_marche', 'travaux'),
+    sb.from('appels_offre').select('id', { count: 'exact', head: true }).eq('nature', NATURE_APPEL_OFFRE).gte('date_publication', semaine),
+    ...METIERS_BTP.map((m) => ouverts().eq('categorie', m.categorie)),
+  ])
+
+  return {
+    ouverts: tous.count ?? 0,
+    ouvertsTravaux: travaux.count ?? 0,
+    nouveauxSemaine: nouveaux.count ?? 0,
+    metiers: METIERS_BTP.map((m, i) => ({ ...m, ouverts: metiers[i].count ?? 0 }))
+      .filter((m) => m.ouverts > 0)
+      .sort((a, b) => b.ouverts - a.ouverts),
+  }
 }
 
 // ─── Top categories (CPV) ─────────────────────────────────────────────────────
@@ -296,6 +391,32 @@ export async function getTopCategories(limit = 40): Promise<{ categorie: string;
     counts[cat].count++
   }
   return Object.values(counts).sort((a, b) => b.count - a.count).slice(0, limit)
+}
+
+/**
+ * Top catégories en ne comptant que les avis de marché (le RPC get_top_categories compte
+ * aussi les attributions et les rectificatifs) : on recompte les candidats du RPC.
+ * Affiché dans les filtres de chaque liste : mis en cache 1 h.
+ */
+export const getTopCategoriesAo = unstable_cache(topCategoriesAo, ['top-categories-ao'], { revalidate: 3600 })
+
+async function topCategoriesAo(
+  limit = 24,
+): Promise<{ categorie: string; categorie_label: string; count: number }[]> {
+  const sb = getSupabase()
+  if (!sb) return []
+  const candidats = await getTopCategories(limit + 10)
+  const recomptes = await Promise.all(
+    candidats.map(async (c) => {
+      const { count } = await sb
+        .from('appels_offre')
+        .select('id', { count: 'exact', head: true })
+        .eq('categorie', c.categorie)
+        .eq('nature', NATURE_APPEL_OFFRE)
+      return { ...c, count: count ?? c.count }
+    }),
+  )
+  return recomptes.sort((a, b) => b.count - a.count).slice(0, limit)
 }
 
 // ─── Regions by categorie ─────────────────────────────────────────────────────

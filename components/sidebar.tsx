@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 export type SidebarCategory = {
   categorie: string
@@ -62,12 +62,27 @@ export default function Sidebar({ topCategories = [] }: SidebarProps) {
   const currentSecteur = searchParams.get('secteur') ?? ''
 
   const hasFilters = currentProcedure || currentRegion || currentDateLimite || currentSecteur
+  const nbFiltres = [currentProcedure, currentRegion, currentDateLimite, currentSecteur].filter(Boolean).length
+
+  // Sur mobile, les filtres sont repliés pour que la liste arrive tout de suite
+  const [ouvert, setOuvert] = useState(false)
 
   return (
-    <aside className="mb-8 md:mb-0 md:w-1/3 md:mr-8 lg:mr-10 md:shrink-0 md:self-start md:sticky md:top-8">
-        <div className="relative bg-gray-50 rounded-xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-sm font-semibold text-gray-800">Filtres</span>
+    <aside className="mb-6 md:mb-0 md:w-1/3 md:mr-8 lg:mr-10 md:shrink-0 md:self-start md:sticky md:top-8">
+        <div className="relative bg-gray-50 rounded-xl border border-gray-200 p-4 md:p-5">
+          <div className="flex items-center justify-between md:mb-5">
+            <button
+              type="button"
+              className="flex items-center gap-2 text-sm font-semibold text-gray-800 md:pointer-events-none"
+              aria-expanded={ouvert}
+              onClick={() => setOuvert((o) => !o)}
+            >
+              Filtres
+              {nbFiltres > 0 && <span className="rounded-full bg-blue-500 px-1.5 text-xs text-white">{nbFiltres}</span>}
+              <svg className={`h-3 w-3 fill-current transition md:hidden ${ouvert ? 'rotate-180' : ''}`} viewBox="0 0 12 12" aria-hidden="true">
+                <path d="M10.28 4.305 6 8.585l-4.28-4.28.707-.707L6 7.17l3.573-3.572z" />
+              </svg>
+            </button>
             {hasFilters && (
               <button className="text-xs font-medium text-blue-500 hover:underline" onClick={handleClear}>
                 Effacer tout
@@ -75,7 +90,7 @@ export default function Sidebar({ topCategories = [] }: SidebarProps) {
             )}
           </div>
 
-          <div className="space-y-6">
+          <div className={`space-y-6 mt-5 md:mt-0 ${ouvert ? '' : 'hidden'} md:block`}>
             {/* Date limite */}
             <div>
               <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Date limite avant le</div>

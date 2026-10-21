@@ -483,10 +483,20 @@ export default function Analyseur({ intro }: { intro: ReactNode }) {
 
           <div className="no-print mt-6 rounded-2xl bg-gray-900 p-6 md:p-8 text-white md:flex md:items-center md:justify-between md:gap-8">
             <div>
-              <p className="text-xl font-bold">On automatise ça pour vous</p>
-              <p className="text-gray-300 mt-1">vision analyse chaque DCE dès sa publication, prépare la checklist et la trame de réponse, dans vos outils.</p>
+              <p className="text-xl font-bold">Vous répondez à cet appel d'offres ?</p>
+              <p className="text-gray-300 mt-1">
+                vision prépare la réponse à partir de ce dossier : checklist des pièces, trame du mémoire technique calée sur les
+                critères, dossier administratif. Vous gardez le prix et la relecture finale.
+              </p>
             </div>
-            <a href={avecUtmVision('https://www.visionbtp.com', { medium: 'outil', campaign: 'analyse-rc', content: 'resultat' })} target="_blank" rel="noopener" className="btn mt-4 md:mt-0 shrink-0 bg-white text-gray-900 hover:bg-blue-50">Découvrir vision →</a>
+            <a
+              href={avecUtmVision('https://www.visionbtp.com/contact', { medium: 'outil', campaign: 'analyse-rc', content: 'resultat' })}
+              target="_blank"
+              rel="noopener"
+              className="btn mt-4 md:mt-0 shrink-0 bg-white text-gray-900 hover:bg-blue-50"
+            >
+              Faire préparer ma réponse →
+            </a>
           </div>
         </div>
       )}
