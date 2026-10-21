@@ -14,7 +14,7 @@ export default async function AoList({ filters = {} }: AoListProps) {
     <div className="pb-8 md:pb-16">
       {count > 0 && (
         <div className="flex justify-end mb-4">
-          <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offre</span>
+          <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offres</span>
         </div>
       )}
 
@@ -22,7 +22,7 @@ export default async function AoList({ filters = {} }: AoListProps) {
       <div className="flex flex-col gap-3">
         {appelsOffre.length === 0 ? (
           <div className="py-16 text-center text-gray-400">
-            <p className="text-lg mb-2">Aucun appel d'offre pour le moment.</p>
+            <p className="text-lg mb-2">Aucun appel d'offres pour le moment.</p>
             <p className="text-sm">Lance le cron BOAMP pour importer les données.</p>
           </div>
         ) : (

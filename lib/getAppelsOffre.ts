@@ -1,9 +1,34 @@
+import { cache } from 'react'
 import { getSupabase } from './supabase'
 
 export const PAGE_SIZE = 20
 
 // The three type_marche slugs that map directly to DB enum values
 export const TYPE_MARCHE_SLUGS = new Set(['travaux', 'services', 'fournitures'])
+
+export const TYPE_MARCHE_LABELS: Record<string, string> = {
+  travaux: 'Travaux',
+  services: 'Services',
+  fournitures: 'Fournitures',
+}
+
+/** Libellé d'une catégorie d'après son slug : type de marché, sinon libellé enregistré en base. */
+export const getCategorieLabel = cache(async (categorie: string): Promise<string> => {
+  if (TYPE_MARCHE_SLUGS.has(categorie)) return TYPE_MARCHE_LABELS[categorie]
+  const sb = getSupabase()
+  if (sb) {
+    const { data } = await sb
+      .from('appels_offre')
+      .select('categorie_label')
+      .eq('categorie', categorie)
+      .not('categorie_label', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    if (data?.categorie_label) return data.categorie_label as string
+  }
+  const label = categorie.replace(/-/g, ' ')
+  return label.charAt(0).toUpperCase() + label.slice(1)
+})
 
 export type AoFilters = {
   type?: string        // type_marche
@@ -153,6 +178,23 @@ export async function getAppelOffreById(id: number): Promise<AppelOffre | null> 
 
   if (error) { console.error('getAppelOffreById error:', error); return null }
   return data as AppelOffre
+}
+
+/** Fiche d'un avis d'après sa référence BOAMP (ex. l'appel d'offres visé par un rectificatif). */
+export async function getAppelOffreByReference(
+  reference: string,
+): Promise<Pick<AppelOffre, 'id' | 'slug' | 'categorie' | 'titre'> | null> {
+  const sb = getSupabase()
+  if (!sb) return null
+
+  const { data, error } = await sb
+    .from('appels_offre')
+    .select('id, slug, categorie, titre')
+    .eq('reference', reference)
+    .maybeSingle()
+
+  if (error) { console.error('getAppelOffreByReference error:', error); return null }
+  return data
 }
 
 export async function getSimilarAppelsOffre(

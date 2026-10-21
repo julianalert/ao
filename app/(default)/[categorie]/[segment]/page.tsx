@@ -4,7 +4,9 @@ export const dynamicParams = true
 import React, { Suspense } from 'react'
 import {
   getAppelOffreById,
+  getAppelOffreByReference,
   getAppelsOffreByRegion,
+  getCategorieLabel,
   getSimilarAppelsOffre,
   getRegionsByCategorie,
   TYPE_MARCHE_SLUGS,
@@ -15,12 +17,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import SidebarWrapper from '@/components/sidebar-wrapper'
-import AoItem, { formatDate, TYPE_LABELS, PROCEDURE_LABELS } from '../../ao-item'
+import AoItem, { aoHref, formatDate, TYPE_LABELS, PROCEDURE_LABELS } from '../../ao-item'
 import Pagination from '@/components/pagination'
 import { BreadcrumbJsonLd } from '@/components/json-ld'
 import AlerteSignup from '@/components/alertes/alerte-signup'
 import FavoriButton from '@/components/alertes/favori-button'
-import { departementLabel, normaliserDepartement } from '@/lib/alertes/geo'
+import { departementLabel, normaliserDepartement, regionLabel as libelleRegion } from '@/lib/alertes/geo'
+import { enRegion, minusculeInitiale, tronquer } from '@/lib/format'
+import { statutFiche, type StatutFiche } from '@/lib/fiche-utile'
 import AoGuides from '@/components/blog/ao-guides'
 
 interface PageProps {
@@ -48,11 +52,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (isAoSegment(segment)) {
     const ao = await getAppelOffreById(extractIdFromSegment(segment))
-    if (!ao) return { title: "Appel d'offre introuvable" }
+    if (!ao) return { title: "Appel d'offres introuvable" }
+    const lieu = ao.departement ? departementLabel(ao.departement) : ao.region_label
+    const acheteur = ao.acheteur ?? 'un acheteur public'
+    const categorieLabel = minusculeInitiale(ao.categorie_label ?? (await getCategorieLabel(categorie)))
+    const montant = ao.montant_estime ? ` Montant estimé : ${formatMontant(ao.montant_estime)} HT.` : ''
     return {
-      title: `${ao.titre} — ${ao.reference}`,
-      description: `Marché public : ${ao.objet ?? ao.titre}. Acheteur : ${ao.acheteur ?? 'Non précisé'}. Date limite : ${formatDate(ao.date_limite, false)}.`,
+      title: lieu ? `${tronquer(ao.titre, 70)} – ${lieu}` : tronquer(ao.titre, 85),
+      description: tronquer(
+        `Appel d'offres ${categorieLabel} publié par ${acheteur}${lieu ? `, lieu d'exécution : ${lieu}` : ''}. Date limite : ${formatDate(ao.date_limite, false)}.${montant} Critères, lots et accès au dossier de consultation.`,
+        200,
+      ),
       alternates: { canonical: `/${categorie}/${segment}` },
+      // Fiches clôturées, attributions, rectificatifs… : consultables mais pas indexées (lib/fiche-utile.ts)
+      ...(statutFiche(ao).utile ? {} : { robots: { index: false, follow: true } }),
       openGraph: {
         type: 'article',
         ...(ao.date_publication ? { publishedTime: ao.date_publication } : {}),
@@ -61,14 +74,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
-  const categorieLabel = TYPE_MARCHE_SLUGS.has(categorie)
-    ? ({ travaux: 'Travaux', services: 'Services', fournitures: 'Fournitures' } as Record<string, string>)[categorie]
-    : categorie.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-  const regionLabel = segment.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const categorieLabel = minusculeInitiale(await getCategorieLabel(categorie))
+  const region = enRegion(libelleRegion(segment))
 
   return {
-    title: `Appels d'offre ${categorieLabel} en ${regionLabel}`,
-    description: `Marchés publics ${categorieLabel} en ${regionLabel}. Mis à jour quotidiennement depuis le BOAMP.`,
+    title: `Appels d'offres ${categorieLabel} ${region}`,
+    description: `Les appels d'offres publics ${categorieLabel} ${region} publiés au BOAMP, mis à jour chaque matin : acheteur, date limite, montant estimé et accès au dossier. Gratuit, sans inscription.`,
     alternates: { canonical: `/${categorie}/${segment}` },
   }
 }
@@ -136,6 +147,11 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
     : null
 
   const lieuExecution = parsed.lieuExecution ?? (ao.departement ? `Département ${ao.departement}` : null)
+
+  const statut = statutFiche(ao)
+  const annonceLiee = !statut.utile && statut.raison === 'autre-avis' && Array.isArray(ao.raw_data?.annonce_lie)
+    ? await getAppelOffreByReference(String(ao.raw_data.annonce_lie[0]))
+    : null
 
   // All criteria extracted once for the top-level section
   const allCriteria = parsed.lots.some((l) => l.criteria.length > 0)
@@ -372,6 +388,16 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
               </div>
 
               <h1 className="text-2xl md:text-3xl font-extrabold font-inter mb-6 leading-tight">{ao.titre}</h1>
+
+              {!statut.utile && (
+                <FicheCloseBanner
+                  statut={statut}
+                  ao={ao}
+                  categorie={categorie}
+                  categorieLabel={categorieLabel}
+                  annonceLiee={annonceLiee}
+                />
+              )}
 
               {/* ── Synthèse rapide ── */}
               <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -699,7 +725,8 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
                   )}
                 </section>
 
-                {/* ── Comment postuler ── */}
+                {/* ── Comment postuler (seulement si on peut encore répondre) ── */}
+                {statut.utile && (
                 <section>
                   <SectionTitle>Comment postuler</SectionTitle>
                   <div className="bg-white border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
@@ -782,6 +809,7 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
 
                   </div>
                 </section>
+                )}
 
                 {/* ── Informations complémentaires ── */}
                 {parsed.infoComplementaire && (
@@ -826,6 +854,69 @@ async function AoDetailPage({ categorie, segment }: { categorie: string; segment
   )
 }
 
+// ─── Fiche close ──────────────────────────────────────────────────────────────
+
+const AUTRES_AVIS: Record<string, { titre: string; texte: string }> = {
+  ATTRIBUTION: {
+    titre: "Avis d'attribution",
+    texte: "Cet avis annonce le résultat d'une consultation : le marché a été attribué et n'est plus ouvert aux candidatures.",
+  },
+  RECTIFICATIF: {
+    titre: 'Avis rectificatif',
+    texte: "Cet avis modifie un appel d'offres déjà publié (date limite, pièces, lots…). Les conditions à jour sont sur l'avis officiel.",
+  },
+  ANNULATION: {
+    titre: "Avis d'annulation",
+    texte: 'Cette consultation a été annulée : il n\'est plus possible d\'y répondre.',
+  },
+}
+
+function FicheCloseBanner({ statut, ao, categorie, categorieLabel, annonceLiee }: {
+  statut: Extract<StatutFiche, { utile: false }>
+  ao: AppelOffre
+  categorie: string
+  categorieLabel: string
+  annonceLiee: Pick<AppelOffre, 'id' | 'slug' | 'categorie' | 'titre'> | null
+}) {
+  let titre: string
+  let texte: string
+  if (statut.raison === 'cloture') {
+    titre = "Cet appel d'offres est clôturé"
+    texte = `La date limite de réponse était le ${formatDate(ao.date_limite, false)} : les candidatures ne sont plus acceptées.`
+  } else if (statut.raison === 'sans-date-ancien') {
+    titre = "Cet appel d'offres est probablement clôturé"
+    texte = `Il a été publié le ${formatDate(ao.date_publication, false)}, sans date limite indiquée. Vérifiez sur l'avis officiel avant de préparer une réponse.`
+  } else {
+    const autre = AUTRES_AVIS[statut.nature ?? '']
+    const libelle = typeof ao.raw_data?.nature_libelle === 'string' ? ao.raw_data.nature_libelle : 'Avis informatif'
+    titre = autre?.titre ?? libelle
+    texte = autre?.texte ?? "Cet avis n'est pas un appel à candidatures."
+  }
+
+  const label = minusculeInitiale(categorieLabel)
+  return (
+    <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-5" role="note">
+      <p className="font-bold text-gray-900">{titre}</p>
+      <p className="mt-1 text-sm text-gray-700">{texte}</p>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+        {annonceLiee && (
+          <Link className="text-blue-600 hover:underline" href={aoHref(annonceLiee)}>
+            Voir l'appel d'offres d'origine →
+          </Link>
+        )}
+        <Link className="text-blue-600 hover:underline" href={`/${categorie}`}>
+          Appels d'offres {label} récents →
+        </Link>
+        {ao.region && ao.region_label && (
+          <Link className="text-blue-600 hover:underline" href={`/${categorie}/${ao.region}`}>
+            {label.charAt(0).toUpperCase() + label.slice(1)} {enRegion(ao.region_label)} →
+          </Link>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Region Page ──────────────────────────────────────────────────────────────
 
 async function RegionPage({
@@ -843,18 +934,15 @@ async function RegionPage({
     page: sp.page ? parseInt(sp.page) : 1,
   }
 
-  const [result, allRegions] = await Promise.all([
+  const [result, allRegions, categorieLabel] = await Promise.all([
     getAppelsOffreByRegion(categorie, region, filters),
     getRegionsByCategorie(categorie),
+    getCategorieLabel(categorie),
   ])
 
   const { data: appelsOffre, count, totalPages, page } = result
 
-  const categorieLabel = TYPE_MARCHE_SLUGS.has(categorie)
-    ? ({ travaux: 'Travaux', services: 'Services', fournitures: 'Fournitures' } as Record<string, string>)[categorie]
-    : (appelsOffre[0]?.categorie_label ?? categorie)
-  const regionLabel = appelsOffre[0]?.region_label
-    ?? region.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  const regionLabel = appelsOffre[0]?.region_label ?? libelleRegion(region)
 
   const breadcrumbItems = [
     { name: 'Accueil', href: '/' },
@@ -878,7 +966,7 @@ async function RegionPage({
               <span className="text-gray-500">{regionLabel}</span>
             </div>
             <h1 className="h1 font-inter mb-4">
-              Appels d'offre {categorieLabel} en {regionLabel}
+              Appels d'offres {minusculeInitiale(categorieLabel)} {enRegion(regionLabel)}
             </h1>
             <p className="text-lg text-gray-500 mb-6">
               {count > 0
@@ -928,13 +1016,13 @@ async function RegionPage({
                   </div>
                   {count > 0 && (
                     <div className="flex justify-end mb-4">
-                      <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offre</span>
+                      <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offres</span>
                     </div>
                   )}
                   <div className="flex flex-col gap-3">
                     {appelsOffre.length === 0 ? (
                       <div className="py-16 text-center text-gray-400">
-                        <p className="text-lg mb-2">Aucun appel d'offre dans cette région.</p>
+                        <p className="text-lg mb-2">Aucun appel d'offres dans cette région.</p>
                         <Link className="text-blue-500 hover:underline" href={`/${categorie}`}>
                           Voir tous les marchés {categorieLabel}
                         </Link>

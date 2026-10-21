@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { OUTILS } from '@/lib/outils/catalog'
 import { VISIONBTP_URL } from '@/lib/outils/author'
+import { avecUtmVision } from '@/lib/blog/config'
+import { GererCookiesButton } from '@/components/analytics'
 
 type Lien = { label: string; href: string; externe?: boolean }
 
@@ -8,7 +10,7 @@ const COLONNES: { titre: string; liens: Lien[] }[] = [
   {
     titre: 'Marchés publics',
     liens: [
-      { label: 'Tous les appels d\'offre', href: '/' },
+      { label: 'Tous les appels d\'offres', href: '/' },
       { label: 'Marchés de travaux', href: '/travaux' },
       { label: 'Marchés de services', href: '/services' },
       { label: 'Marchés de fournitures', href: '/fournitures' },
@@ -28,6 +30,8 @@ const COLONNES: { titre: string; liens: Lien[] }[] = [
       { label: 'Blog', href: '/blog' },
       { label: 'À propos', href: '/a-propos' },
       { label: 'BOAMP, le bulletin officiel', href: 'https://www.boamp.fr', externe: true },
+      { label: 'Mentions légales', href: '/mentions-legales' },
+      { label: 'Confidentialité et cookies', href: '/confidentialite' },
     ],
   },
 ]
@@ -47,7 +51,7 @@ export default function Footer() {
               <span className="text-lg font-extrabold tracking-tight text-gray-900">mon-ao.com</span>
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-              Les appels d'offre publics français, mis à jour chaque jour depuis le BOAMP, et des outils gratuits pour y répondre.
+              Les appels d'offres publics français, mis à jour chaque jour depuis le BOAMP, et des outils gratuits pour y répondre.
             </p>
           </div>
 
@@ -79,15 +83,22 @@ export default function Footer() {
         {/* Bas de page */}
         <div className="flex flex-col gap-2 border-t border-gray-200 py-6 text-sm text-gray-500 md:flex-row md:items-center md:justify-between">
           <p>
-            Mon-ao.com © {new Date().getFullYear()} Annuaire Marchés Publics. Données issues du{' '}
+            © {new Date().getFullYear()} mon-ao.com. Données issues du{' '}
             <a className="hover:underline" href="https://www.boamp.fr" target="_blank" rel="noopener noreferrer">BOAMP</a>
+            {' · '}
+            <GererCookiesButton className="hover:underline" />
           </p>
           <p>
-            Plateforme propulsée par{' '}
-            <a className="font-semibold text-gray-700 hover:text-blue-600 transition" href={VISIONBTP_URL} target="_blank" rel="noopener">
-              VisionBTP.com
-            </a>{' '}
-            🇫🇷
+            Édité par{' '}
+            <a
+              className="font-semibold text-gray-700 hover:text-blue-600 transition"
+              href={avecUtmVision(VISIONBTP_URL, { medium: 'site', campaign: 'footer' })}
+              target="_blank"
+              rel="noopener"
+            >
+              vision
+            </a>
+            , l'agence d'automatisation IA du BTP 🇫🇷
           </p>
         </div>
       </div>

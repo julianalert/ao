@@ -2,7 +2,8 @@ export const revalidate = 3600
 export const dynamicParams = true
 
 import { Suspense } from 'react'
-import { getAppelsOffreByCategorie, getRegionsByCategorie, TYPE_MARCHE_SLUGS, type AoFilters } from '@/lib/getAppelsOffre'
+import { getAppelsOffreByCategorie, getCategorieLabel, getRegionsByCategorie, TYPE_MARCHE_SLUGS, type AoFilters } from '@/lib/getAppelsOffre'
+import { minusculeInitiale } from '@/lib/format'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import SidebarWrapper from '@/components/sidebar-wrapper'
@@ -10,29 +11,17 @@ import AoItem from '../ao-item'
 import Pagination from '@/components/pagination'
 import AlerteSignup from '@/components/alertes/alerte-signup'
 
-const TYPE_MARCHE_LABELS: Record<string, string> = {
-  travaux: 'Travaux',
-  services: 'Services',
-  fournitures: 'Fournitures',
-}
-
 interface PageProps {
   params: Promise<{ categorie: string }>
   searchParams: Promise<Record<string, string>>
 }
 
-function getCategorieLabel(categorie: string, firstLabel?: string | null): string {
-  if (TYPE_MARCHE_SLUGS.has(categorie)) return TYPE_MARCHE_LABELS[categorie] ?? categorie
-  if (firstLabel) return firstLabel
-  return categorie.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { categorie } = await params
-  const label = getCategorieLabel(categorie)
+  const label = minusculeInitiale(await getCategorieLabel(categorie))
   return {
-    title: `Appels d'offre ${label} — Marchés publics France`,
-    description: `Consultez tous les appels d'offre publics ${label}. Marchés mis à jour quotidiennement depuis le BOAMP.`,
+    title: `Appels d'offres ${label}, mis à jour chaque jour`,
+    description: `Les appels d'offres publics ${label} publiés au BOAMP, mis à jour chaque matin : acheteur, date limite, montant estimé et accès au dossier. Gratuit, sans inscription.`,
     alternates: { canonical: `/${categorie}` },
   }
 }
@@ -49,13 +38,13 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
     page: sp.page ? parseInt(sp.page) : 1,
   }
 
-  const [result, regions] = await Promise.all([
+  const [result, regions, label] = await Promise.all([
     getAppelsOffreByCategorie(categorie, filters),
     getRegionsByCategorie(categorie),
+    getCategorieLabel(categorie),
   ])
 
   const { data: appelsOffre, count, totalPages, page } = result
-  const label = getCategorieLabel(categorie, appelsOffre[0]?.categorie_label)
 
   return (
     <>
@@ -70,7 +59,7 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
               </Link>
             </div>
             <h1 className="h1 font-inter mb-4">
-              Appels d'offre {label}
+              Appels d'offres {minusculeInitiale(label)}
             </h1>
             <p className="text-lg text-gray-500 mb-6">
               {count > 0
@@ -121,14 +110,14 @@ export default async function CategoriePage({ params, searchParams }: PageProps)
                   </div>
                   {count > 0 && (
                     <div className="flex justify-end mb-4">
-                      <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offre</span>
+                      <span className="text-sm text-gray-400">{count.toLocaleString('fr-FR')} appels d'offres</span>
                     </div>
                   )}
 
                   <div className="flex flex-col gap-3">
                     {appelsOffre.length === 0 ? (
                       <div className="py-16 text-center text-gray-400">
-                        <p className="text-lg mb-2">Aucun appel d'offre dans cette catégorie.</p>
+                        <p className="text-lg mb-2">Aucun appel d'offres dans cette catégorie.</p>
                         <Link className="text-blue-500 hover:underline" href="/">Voir tous les marchés</Link>
                       </div>
                     ) : (

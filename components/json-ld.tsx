@@ -1,8 +1,9 @@
 import type { Author } from '@/lib/blog/config'
 import type { PostMeta } from '@/lib/blog/posts'
 import { COVER_HEIGHT, COVER_WIDTH, SITE_URL } from '@/lib/blog/config'
+import { SITE_NAME } from '@/lib/site'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://votre-domaine.fr'
+const siteUrl = SITE_URL
 
 // ─── BreadcrumbList ────────────────────────────────────────────────────────────
 
@@ -41,24 +42,19 @@ export function WebSiteJsonLd() {
         '@type': 'WebSite',
         '@id': `${siteUrl}/#website`,
         url: siteUrl,
-        name: "Annuaire Marchés Publics",
-        description: "Annuaire complet des appels d'offre publics français (BOAMP).",
+        name: SITE_NAME,
+        description: "Les appels d'offres publics français du BOAMP, mis à jour chaque jour, et des outils gratuits pour y répondre.",
         inLanguage: 'fr-FR',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${siteUrl}/?secteur={search_term_string}`,
-          },
-          'query-input': 'required name=search_term_string',
-        },
+        publisher: { '@id': `${siteUrl}/#organization` },
       },
       {
         '@type': 'Organization',
         '@id': `${siteUrl}/#organization`,
         url: siteUrl,
-        name: "Annuaire Marchés Publics",
-        description: "Annuaire de référence des appels d'offre publics français issus du BOAMP.",
+        name: SITE_NAME,
+        logo: { '@type': 'ImageObject', url: `${siteUrl}/icon.svg` },
+        description: "Annuaire gratuit des appels d'offres publics français issus du BOAMP, édité par vision.",
+        parentOrganization: { '@type': 'Organization', name: 'vision', url: 'https://www.visionbtp.com' },
       },
     ],
   }

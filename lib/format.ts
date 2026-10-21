@@ -89,3 +89,21 @@ export function parseNumber(s: string): number {
   const n = parseFloat(s.replace(/\s/g, '').replace(',', '.'))
   return isNaN(n) ? NaN : n
 }
+
+/** « Travaux » → « travaux » : libellé placé après « Appels d'offres ». */
+export function minusculeInitiale(s: string): string {
+  return s.charAt(0).toLowerCase() + s.slice(1)
+}
+
+/** « en Grand Est », « à La Réunion », « à Mayotte » */
+export function enRegion(label: string): string {
+  return /^(La |Mayotte)/.test(label) ? `à ${label}` : `en ${label}`
+}
+
+/** Coupe un texte au dernier mot entier avant `max` caractères. */
+export function tronquer(s: string, max: number): string {
+  if (s.length <= max) return s
+  const coupe = s.slice(0, max - 1)
+  const espace = coupe.lastIndexOf(' ')
+  return `${(espace > max * 0.6 ? coupe.slice(0, espace) : coupe).replace(/[\s,;:.\-–—]+$/, '')}…`
+}

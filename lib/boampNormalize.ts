@@ -1,3 +1,5 @@
+import { dateLimiteDepuisDonnees } from './boamp-date-limite.mjs'
+
 // Mapping des codes département INSEE vers région (slug + label)
 export const DEPT_TO_REGION: Record<string, { region: string; region_label: string }> = {
   '01': { region: 'auvergne-rhone-alpes', region_label: 'Auvergne-Rhône-Alpes' },
@@ -210,7 +212,10 @@ export function normalizeBoampRecord(record: BoampRecord): Omit<AppelOffre, 'id'
     procedure: normalizeProcedure(record.type_procedure, record.famille),
     montant_estime,
     date_publication: record.dateparution ? new Date(record.dateparution).toISOString() : null,
-    date_limite: record.datelimitereponse ? new Date(record.datelimitereponse).toISOString() : null,
+    // Procédures restreintes et négociées : datelimitereponse est vide, la date est dans l'avis eForms
+    date_limite: record.datelimitereponse
+      ? new Date(record.datelimitereponse).toISOString()
+      : record.nature === 'APPEL_OFFRE' ? dateLimiteDepuisDonnees(record.donnees) : null,
     url_document: record.url_avis || null,
     raw_data: record as unknown as Record<string, unknown>,
   }

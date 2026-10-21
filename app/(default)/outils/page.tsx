@@ -37,7 +37,7 @@ export default async function OutilsPage() {
                 Des outils <Accent>gratuits</Accent> pour gagner vos marchés publics
               </h1>
               <p className="text-lg text-gray-500">
-                Calculateurs et simulateurs pour les entreprises du BTP qui répondent aux appels d'offre : résultat immédiat, sans
+                Calculateurs et simulateurs pour les entreprises du BTP qui répondent aux appels d'offres : résultat immédiat, sans
                 inscription ni logiciel à installer.
               </p>
             </div>

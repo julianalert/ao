@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { getSupabase } from '@/lib/supabase'
+import { track } from '@/lib/analytics'
+import { avecUtmVision } from '@/lib/blog/config'
 import { CORPS_ETAT } from '@/lib/alertes/corps-etat'
 import { DEPARTEMENTS } from '@/lib/alertes/geo'
 import type { Fiche, ResultatAnalyse, SourceVerifiee } from '@/lib/analyse-rc/schema'
@@ -138,12 +140,15 @@ export default function Analyseur({ intro }: { intro: ReactNode }) {
   const [secondes, setSecondes] = useState(0)
   const [survol, setSurvol] = useState(false)
   const resultatRef = useRef<HTMLDivElement>(null)
+  // Email déjà connu au chargement : seul un nouvel email compte comme un lead
+  const emailConnu = useRef<string | null>(null)
 
   useEffect(() => {
     const ao = Number(new URLSearchParams(window.location.search).get('ao'))
     if (Number.isInteger(ao) && ao > 0) setAoId(ao)
     try {
-      setEmail(localStorage.getItem(EMAIL_KEY) ?? '')
+      emailConnu.current = localStorage.getItem(EMAIL_KEY)
+      setEmail(emailConnu.current ?? '')
     } catch {}
   }, [])
 
@@ -158,6 +163,8 @@ export default function Analyseur({ intro }: { intro: ReactNode }) {
     setErreur(null)
     setResultat(null)
     const mail = email.trim() || undefined
+    const origine = 'fichier' in source ? 'fichier' : 'ao'
+    track('analyse_rc_lancee', { origine })
     try {
       let res: Response
       if ('fichier' in source) {
@@ -189,6 +196,11 @@ export default function Analyseur({ intro }: { intro: ReactNode }) {
       const json = await res.json()
       if (res.status === 402) return demanderEmail()
       if (!res.ok) throw new Error(json.error ?? 'L\'analyse a échoué.')
+      track('analyse_rc_terminee', { origine })
+      if (mail && mail !== emailConnu.current) {
+        track('generate_lead', { methode: 'analyse_rc' })
+        emailConnu.current = mail
+      }
       if (mail) {
         try {
           localStorage.setItem(EMAIL_KEY, mail)
@@ -198,12 +210,14 @@ export default function Analyseur({ intro }: { intro: ReactNode }) {
       setEtat('termine')
       setTimeout(() => resultatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
     } catch (e) {
+      track('analyse_rc_erreur', { origine })
       setErreur(e instanceof Error ? e.message : 'L\'analyse a échoué.')
       setEtat('erreur')
     }
   }
 
   function demanderEmail() {
+    track('analyse_rc_email_demande')
     setEmailRequis(true)
     setEtat('attente')
   }
@@ -470,9 +484,9 @@ export default function Analyseur({ intro }: { intro: ReactNode }) {
           <div className="no-print mt-6 rounded-2xl bg-gray-900 p-6 md:p-8 text-white md:flex md:items-center md:justify-between md:gap-8">
             <div>
               <p className="text-xl font-bold">On automatise ça pour vous</p>
-              <p className="text-gray-300 mt-1">VisionBTP analyse chaque DCE dès sa publication, prépare la checklist et la trame de réponse, dans vos outils.</p>
+              <p className="text-gray-300 mt-1">vision analyse chaque DCE dès sa publication, prépare la checklist et la trame de réponse, dans vos outils.</p>
             </div>
-            <a href="https://www.visionbtp.com" target="_blank" rel="noopener" className="btn mt-4 md:mt-0 shrink-0 bg-white text-gray-900 hover:bg-blue-50">Découvrir VisionBTP →</a>
+            <a href={avecUtmVision('https://www.visionbtp.com', { medium: 'outil', campaign: 'analyse-rc', content: 'resultat' })} target="_blank" rel="noopener" className="btn mt-4 md:mt-0 shrink-0 bg-white text-gray-900 hover:bg-blue-50">Découvrir vision →</a>
           </div>
         </div>
       )}

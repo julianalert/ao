@@ -273,8 +273,8 @@ export function ToolCard({ outil }: { outil: (typeof OUTILS)[number] }) {
   )
 }
 
-/** Maillage vers les appels d'offre de travaux encore ouverts. */
-export async function RelatedAos({ title = 'Appels d\'offre travaux en cours' }: { title?: string }) {
+/** Maillage vers les appels d'offres de travaux encore ouverts. */
+export async function RelatedAos({ title = 'Appels d\'offres travaux en cours' }: { title?: string }) {
   const { data } = await getAppelsOffreByCategorie('travaux', { page: 1 })
   const now = Date.now()
   const enCours = data.filter((ao) => !ao.date_limite || new Date(ao.date_limite).getTime() > now).slice(0, 4)

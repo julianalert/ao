@@ -1,7 +1,7 @@
 // Configuration éditoriale du blog : auteurs, piliers, CTA.
 // Les articles eux-mêmes vivent dans content/blog/*.mdx (frontmatter + contenu).
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://mon-ao.com'
+export { SITE_URL } from '@/lib/site'
 
 export const BLOG_PATH = '/blog'
 
@@ -255,15 +255,33 @@ export function downloadFormat(href: string): string {
   return 'PDF'
 }
 
+// ─── Liens vers vision ────────────────────────────────────────────────────────
+
+const VISION_HOST = 'visionbtp.com'
+
+/**
+ * Ajoute les paramètres UTM de mon-ao.com à un lien vers visionbtp.com, pour attribuer
+ * les visites et les demandes de contact. Les autres liens, et ceux qui ont déjà
+ * un utm_source, sont renvoyés tels quels.
+ */
+export function avecUtmVision(href: string, utm: { medium: string; campaign: string; content?: string }): string {
+  let url: URL
+  try {
+    url = new URL(href)
+  } catch {
+    return href
+  }
+  if (!url.hostname.endsWith(VISION_HOST) || url.searchParams.has('utm_source')) return href
+  url.searchParams.set('utm_source', 'mon-ao')
+  url.searchParams.set('utm_medium', utm.medium)
+  url.searchParams.set('utm_campaign', utm.campaign)
+  if (utm.content) url.searchParams.set('utm_content', utm.content)
+  return url.toString()
+}
+
 // CTA C : « on analyse 3 AO pour vous gratuitement »
 export function analysisCtaHref(campaign: string, medium = 'blog'): string {
-  const params = new URLSearchParams({
-    utm_source: 'mon-ao',
-    utm_medium: medium,
-    utm_campaign: 'analyse-3-ao',
-    utm_content: campaign,
-  })
-  return `https://www.visionbtp.com/contact?${params.toString()}`
+  return avecUtmVision('https://www.visionbtp.com/contact', { medium, campaign: 'analyse-3-ao', content: campaign })
 }
 
 // Catégories d'AO mises en avant en fin d'article (maillage vers les pages catégories)

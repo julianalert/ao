@@ -1,9 +1,6 @@
 import type { MetadataRoute } from 'next'
-import {
-  getAosForSitemap,
-  getAllCategoriesForSitemap,
-  getAllCategorieRegionsForSitemap,
-} from '@/lib/sitemap'
+import { AO_PAR_SITEMAP, countAosForSitemap, getAosForSitemap, getCategoriesEtRegionsForSitemap } from '@/lib/sitemap'
+import { SITE_URL } from '@/lib/site'
 import { getAllPosts, getBlogPageCount, getPostsByAuthor, getPostsByCategory } from '@/lib/blog/posts'
 import { AUTHORS, CATEGORIES, blogPageHref, categoryHref } from '@/lib/blog/config'
 import { OUTILS } from '@/lib/outils/catalog'
@@ -13,15 +10,43 @@ import { acheteurHref, acheteursIndex } from '@/lib/decp/marches'
 
 export const revalidate = 3600
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://votre-domaine.fr'
+// Un fichier par lot : /sitemap/pages.xml (pages éditoriales, outils, catégories, régions)
+// puis /sitemap/ao-0.xml, /sitemap/ao-1.xml… (fiches AO). L'index, sur /sitemap.xml, est servi
+// par app/sitemap-index.xml/route.ts.
+export async function generateSitemaps(): Promise<{ id: string }[]> {
+  const nbFichiersAo = Math.max(1, Math.ceil((await countAosForSitemap()) / AO_PAR_SITEMAP))
+  return [{ id: 'pages' }, ...Array.from({ length: nbFichiersAo }, (_, i) => ({ id: `ao-${i}` }))]
+}
+
+export default async function sitemap({ id }: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
+  const fichier = await id
+  if (fichier.startsWith('ao-')) return aoEntries(Number(fichier.slice(3)))
+  return pageEntries()
+}
+
+async function aoEntries(chunk: number): Promise<MetadataRoute.Sitemap> {
+  const now = new Date().toISOString()
+  const entries: MetadataRoute.Sitemap = []
+
+  // AO detail pages: /:categorie/:id-:slug
+  for (const ao of await getAosForSitemap(chunk)) {
+    if (!ao.slug) continue
+    const cat = ao.categorie ?? 'autre'
+    entries.push({
+      url: `${SITE_URL}/${cat}/${ao.id}-${ao.slug}`,
+      lastModified: ao.date_publication ?? now,
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    })
+  }
+  return entries
+}
+
+async function pageEntries(): Promise<MetadataRoute.Sitemap> {
+  const siteUrl = SITE_URL
   const now = new Date().toISOString()
 
-  const [categories, categorieRegions, aos] = await Promise.all([
-    getAllCategoriesForSitemap(),
-    getAllCategorieRegionsForSitemap(),
-    getAosForSitemap(),
-  ])
+  const { categories, categorieRegions } = await getCategoriesEtRegionsForSitemap()
 
   const entries: MetadataRoute.Sitemap = [
     // Homepage
@@ -121,18 +146,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.6,
-    })
-  }
-
-  // AO detail pages: /:categorie/:id-:slug
-  for (const ao of aos) {
-    if (!ao.slug) continue
-    const cat = ao.categorie ?? 'autre'
-    entries.push({
-      url: `${siteUrl}/${cat}/${ao.id}-${ao.slug}`,
-      lastModified: ao.date_publication ?? now,
-      changeFrequency: 'weekly',
-      priority: 0.5,
     })
   }
 

@@ -27,7 +27,7 @@ export default function OgImage() {
             <path fill="#93c5fd" d="M13.853 18.14 30.981 1.058 21.357 31l-7.5-12.857z" />
           </svg>
           <span style={{ fontSize: 22, fontWeight: 600, color: '#2563eb' }}>
-            Annuaire Marchés Publics
+            mon-ao.com
           </span>
         </div>
 
@@ -55,7 +55,7 @@ export default function OgImage() {
             marginBottom: 48,
           }}
         >
-          Appels d'offre mis à jour quotidiennement depuis le BOAMP — filtrables par catégorie, région et type.
+          Les appels d'offres publics du BOAMP, chaque jour, et des outils gratuits pour y répondre.
         </div>
 
         {/* Badges */}

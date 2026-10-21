@@ -9,6 +9,10 @@ const nextConfig = {
   async redirects() {
     return [{ source: '/blog/page/1', destination: '/blog', permanent: true }]
   },
+  // Index des sitemaps (voir app/sitemap-index.xml/route.ts)
+  async rewrites() {
+    return [{ source: '/sitemap.xml', destination: '/sitemap-index.xml' }]
+  },
 }
 
 module.exports = nextConfig

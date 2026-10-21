@@ -2,7 +2,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import Link from 'next/link'
 import { getAppelOffreById } from '@/lib/getAppelsOffre'
 import { aoHref, formatDate, PROCEDURE_LABELS } from '@/app/(default)/ao-item'
-import { downloadFormat } from '@/lib/blog/config'
+import { avecUtmVision, downloadFormat } from '@/lib/blog/config'
 import {
   DossierStructure, DeroulementAo, GoNoGoFlow, DecisionMatrix, RcToSommaire, GenericVsSpecific, VeilleMap,
   RcThreePasses, RcAnnotated, OptionsMatrix, OptionChooser, EnvLevers, EnvLevels, RejectionTimeline, NotesToAction,
@@ -22,8 +22,10 @@ function A({ href = '', children, ...props }: ComponentPropsWithoutRef<'a'>) {
   if (href.startsWith('/') || href.startsWith('#')) {
     return <Link href={href} className={className} {...props}>{children}</Link>
   }
+  const vision = avecUtmVision(href, { medium: 'blog', campaign: 'lien-article' })
   return (
-    <a href={href} className={className} target="_blank" rel="noopener noreferrer" {...props}>
+    // Liens vers vision : referrer conservé et UTM ajoutés pour attribuer les visites
+    <a href={vision} className={className} target="_blank" rel={vision === href ? 'noopener noreferrer' : 'noopener'} {...props}>
       {children}
     </a>
   )

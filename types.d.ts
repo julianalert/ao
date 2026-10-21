@@ -24,6 +24,7 @@ type AppelOffre = {
 
 type BoampRecord = {
   idweb: string
+  nature: string | null           // APPEL_OFFRE, ATTRIBUTION, RECTIFICATIF…
   objet: string | null
   nomacheteur: string | null
   famille: string | null

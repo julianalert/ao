@@ -130,10 +130,11 @@ export default function Header() {
               </li>
               <li>
                 <Link
-                  className="btn-sm text-white bg-blue-500 hover:bg-blue-600 shadow-xs"
-                  href="/"
+                  className="btn-sm text-white bg-blue-500 hover:bg-blue-600 shadow-xs whitespace-nowrap"
+                  href="/outils/analyse-rc"
                 >
-                  Tous les marchés
+                  <span className="lg:hidden">Analyser un RC</span>
+                  <span className="hidden lg:inline">Analyser un RC gratuitement</span>
                 </Link>
               </li>
             </ul>

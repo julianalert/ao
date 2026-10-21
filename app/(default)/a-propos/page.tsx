@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { getAoStats } from '@/lib/getAppelsOffre'
 import { getAllPosts } from '@/lib/blog/posts'
-import { SITE_URL, analysisCtaHref } from '@/lib/blog/config'
+import { SITE_URL, analysisCtaHref, avecUtmVision } from '@/lib/blog/config'
 import { INDICES } from '@/lib/indices-catalog'
 import { OUTILS } from '@/lib/outils/catalog'
 import { VISIONBTP_URL } from '@/lib/outils/author'
@@ -23,8 +23,10 @@ export const metadata: Metadata = {
   alternates: { canonical: '/a-propos' },
 }
 
-const CONTACT_URL = `${VISIONBTP_URL}/contact`
-const EQUIPE_URL = `${VISIONBTP_URL}/equipe`
+const utm = { medium: 'site', campaign: 'a-propos' }
+const VISION_URL = avecUtmVision(VISIONBTP_URL, utm)
+const CONTACT_URL = avecUtmVision(`${VISIONBTP_URL}/contact`, utm)
+const EQUIPE_URL = avecUtmVision(`${VISIONBTP_URL}/equipe`, utm)
 const ANALYSE_URL = analysisCtaHref('a-propos', 'a-propos')
 
 const linkClass = 'font-medium text-blue-600 hover:underline'
@@ -61,6 +63,27 @@ const SERVICES: { title: string; href: string; cta: string; text: string }[] = [
       "Selon la méthode de notation de l'acheteur, il calcule votre note prix, votre note finale et votre classement. Il donne surtout le prix qui vous fait passer premier, et combien de points techniques compensent un écart de prix.",
   },
   {
+    title: 'Analyseur de RC et DCE',
+    href: '/outils/analyse-rc',
+    cta: 'Analyser un RC',
+    text:
+      "Déposez le règlement de consultation : l'outil en tire les dates, les critères et leur pondération, les pièces à fournir et les points d'attention, avec la page source de chaque information. Trois analyses gratuites sans email.",
+  },
+  {
+    title: 'Qui gagne quoi',
+    href: '/qui-gagne-quoi',
+    cta: 'Chercher un acheteur',
+    text:
+      "Les marchés publics attribués : qui a gagné, à quel montant et face à combien d'offres. Utile pour connaître ses concurrents et les habitudes d'un acheteur avant de répondre.",
+  },
+  {
+    title: 'Seuils et pièces de candidature',
+    href: '/seuils-marches-publics',
+    cta: 'Voir les seuils',
+    text:
+      "Le tableau des seuils des marchés publics en vigueur, la procédure applicable selon le montant, et la checklist des pièces à fournir (DC1, DC2, DUME, attestations) avec leur durée de validité.",
+  },
+  {
     title: "Index BT et TP de l'INSEE",
     href: '/indices',
     cta: 'Consulter les index',
@@ -82,7 +105,8 @@ const DIFFERENCES: { title: string; text: ReactNode }[] = [
     title: 'Gratuit, sans inscription ni démo commerciale',
     text: (
       <>
-        Annuaire, filtres, outils et index sont accessibles sans créer de compte ni laisser votre e-mail. DoubleTrade ne publie pas
+        Annuaire, filtres, calculateurs et index sont accessibles sans créer de compte ni laisser votre e-mail ; seul l'analyseur
+        de RC demande un e-mail au-delà de trois analyses gratuites. DoubleTrade ne publie pas
         ses tarifs et passe par une demande de démo ; Marchés Online réserve une partie de ses services à des formules payantes,
         dont un abonnement mensuel.
       </>
@@ -184,11 +208,13 @@ const HOW: { title: string; text: ReactNode }[] = [
     ),
   },
   {
-    title: 'Aucun compte, aucune donnée enregistrée',
+    title: 'Aucun compte pour consulter',
     text: (
       <>
-        Consultation, filtres et outils fonctionnent sans inscription. Les montants saisis dans les calculateurs restent dans votre
-        navigateur : ils ne sont ni envoyés ni conservés.
+        Consultation, filtres et calculateurs fonctionnent sans inscription. Les montants saisis dans les calculateurs restent dans
+        votre navigateur : ils ne sont ni envoyés ni conservés. Les documents déposés dans l'analyseur de RC sont supprimés dès la
+        fin de l'analyse. Le détail est sur la page{' '}
+        <Link className={linkClass} href="/confidentialite">Confidentialité et cookies</Link>.
       </>
     ),
   },
@@ -323,7 +349,7 @@ export default async function AProposPage() {
               <p className="text-xl text-gray-700 leading-relaxed mb-4">{VALUE_PROP}</p>
               <p className="text-lg text-gray-500">
                 Le site est conçu et maintenu par Julien et Clément, cofondateurs de{' '}
-                <a className={linkClass} href={VISIONBTP_URL} target="_blank" rel="noopener">vision</a>, l'agence qui automatise la
+                <a className={linkClass} href={VISION_URL} target="_blank" rel="noopener">vision</a>, l'agence qui automatise la
                 réponse aux appels d'offres des entreprises du bâtiment.
               </p>
             </div>
@@ -426,7 +452,7 @@ export default async function AProposPage() {
           <Fact term="Création">2026</Fact>
           <Fact term="Fondateurs">Julien et Clément, cofondateurs de vision</Fact>
           <Fact term="Éditeur">
-            vision (<a className={linkClass} href={VISIONBTP_URL} target="_blank" rel="noopener">visionbtp.com</a>), agence
+            vision (<a className={linkClass} href={VISION_URL} target="_blank" rel="noopener">visionbtp.com</a>), agence
             d'automatisation IA dédiée aux entreprises du bâtiment
           </Fact>
           <Fact term="Siège">Var (83), France</Fact>

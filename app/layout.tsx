@@ -2,7 +2,8 @@ import './css/style.css'
 
 import type { Metadata } from 'next'
 import { Inter, Nothing_You_Could_Do } from 'next/font/google'
-import Script from 'next/script'
+import Analytics from '@/components/analytics'
+import { SITE_NAME, SITE_URL } from '@/lib/site'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -17,21 +18,19 @@ const nycd = Nothing_You_Could_Do({
   display: 'swap'
 })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mon-ao.com'
-const siteName = "Annuaire Marchés Publics"
-const defaultDescription = "Annuaire complet des appels d'offre publics français (BOAMP). Trouvez les marchés publics par catégorie, région et type : travaux, fournitures, services."
+const defaultDescription = "Tous les appels d'offres publics du BOAMP, mis à jour chaque matin et classés par métier et par région, et des outils gratuits pour y répondre."
 
 export const metadata: Metadata = {
   title: {
-    default: "Annuaire des appels d'offre publics France",
-    template: "%s — Marchés publics France",
+    default: `Appels d'offres publics en France, mis à jour chaque jour | ${SITE_NAME}`,
+    template: `%s | ${SITE_NAME}`,
   },
   description: defaultDescription,
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    siteName,
+    siteName: SITE_NAME,
   },
   twitter: {
     card: 'summary_large_image',
@@ -48,24 +47,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <head>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-E93XWNNZ16"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-E93XWNNZ16');
-          `}
-        </Script>
-      </head>
       <body className={`${inter.variable} ${nycd.variable} font-inter antialiased bg-white text-gray-800 tracking-tight`}>
         <div className="flex flex-col min-h-screen overflow-hidden supports-[overflow:clip]:overflow-clip">
           {children}
         </div>
+        <Analytics />
       </body>
     </html>
   )
