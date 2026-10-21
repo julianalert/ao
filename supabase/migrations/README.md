@@ -16,6 +16,7 @@ Puis, depuis la racine du projet :
 node --env-file=.env.local scripts/seed-seuils.mjs      # charge data/seuils.json dans la table seuils
 node --env-file=.env.local scripts/import-decp.mjs      # ≈ 1 million de marchés sur 3 ans, 30 à 60 min
 node --env-file=.env.local scripts/backfill-date-limite.mjs  # dates limites manquantes (procédures restreintes et négociées)
+node --env-file=.env.local scripts/backfill-nature-avis.mjs  # type d'avis des fiches existantes, après 20261021_05
 ```
 
 Les seuils se modifient ensuite dans le Table Editor de Supabase (`valid_from` / `valid_to`), sans redéploiement.

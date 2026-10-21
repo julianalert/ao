@@ -59,9 +59,11 @@ function fichesUtiles(sb: SupabaseClient, colonnes: string, avecNature: boolean,
     .select(colonnes, compter ? { count: 'exact', head: true } : undefined)
     .not('slug', 'is', null)
   if (!avecNature) return q.gte('date_limite', maintenant)
-  return q
-    .eq('nature', NATURE_APPEL_OFFRE)
-    .or(`date_limite.gte.${maintenant},and(date_limite.is.null,date_publication.gte.${seuilSansDateLimite().toISOString()})`)
+  // Une date limite à venir suffit tant que `nature` n'est pas remplie (remplissage en cours)
+  return q.or(
+    `and(date_limite.gte.${maintenant},or(nature.eq.${NATURE_APPEL_OFFRE},nature.is.null)),` +
+      `and(date_limite.is.null,date_publication.gte.${seuilSansDateLimite().toISOString()},nature.eq.${NATURE_APPEL_OFFRE})`,
+  )
 }
 
 /** Nombre de fiches AO publiables dans le sitemap. */
