@@ -157,6 +157,13 @@ export function AnalysisCtaCard({ campaign }: { campaign: string }) {
   )
 }
 
+// CTA B : l'alerte gratuite, pré-remplie avec le métier de l'article (ou le type de marché)
+function alertHref(aoCategory?: string): string {
+  const base = '/outils/alertes-appels-offres'
+  if (!aoCategory) return base
+  return TYPE_MARCHE_SLUGS.has(aoCategory) ? `${base}?types=${aoCategory}` : `${base}?categories=${aoCategory}`
+}
+
 export function ArticleCta({ post }: { post: PostMeta }) {
   return (
     <section aria-labelledby="passez-a-l-action" className="mt-14">
@@ -166,16 +173,16 @@ export function ArticleCta({ post }: { post: PostMeta }) {
       <div className="grid gap-4 md:grid-cols-2">
         {!post.download && (
           <Link
-            href="/travaux"
+            href={alertHref(post.aoCategory)}
             className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-6 transition hover:border-blue-300 hover:shadow-md"
           >
-            <span className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Chaque matin</span>
-            <span className="mb-2 font-bold text-gray-900 group-hover:text-blue-600 transition">Les nouveaux appels d'offres de travaux</span>
+            <span className="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase">Alerte gratuite</span>
+            <span className="mb-2 font-bold text-gray-900 group-hover:text-blue-600 transition">Les appels d'offres de votre métier, chaque matin</span>
             <span className="mb-5 text-sm leading-6 text-gray-500">
-              Publiés au BOAMP et classés par métier et par région sur mon-ao.com, gratuitement.
+              Choisissez votre corps d'état et votre zone : vous recevez par email les nouveaux AO publiés au BOAMP. Sans compte.
             </span>
             <span className="mt-auto text-sm font-medium text-blue-600">
-              Voir les AO de travaux <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+              Créer mon alerte <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
             </span>
           </Link>
         )}

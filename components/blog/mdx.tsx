@@ -10,8 +10,13 @@ import {
   AttestationsByStage, RenewalCalendar, SoftwareCriteriaChain, ToolFamilies, MapaFlow, MapaLayers, CapacityProofs,
   ReferencesRoadmap, PriceDocs, AiTaskMap, AiWorkflowSteps, OabProcedure, OabJustifications, SubcontractingFlows,
   DirectPaymentCircuit,
+  WorksActors, BuildingSchedule, SimplificationTimeline, ReceptionProcedure, ReceptionDeadlines, BoampNotice,
+  CommuneDecision, CommuneCalendar, ElectricInterfaces, DelayOrigins,
 } from './diagrams'
-import { CostTree, CostByWinRate, TravauxScale, DispenseHistory, NotationSimulation, PointValue, LotMoneySplit } from './charts'
+import {
+  CostTree, CostByWinRate, TravauxScale, DispenseHistory, NotationSimulation, PointValue, LotMoneySplit,
+  RegionBars, DispenseShift, PenaltyByDelay, ProcurementByBuyer,
+} from './charts'
 import CostCalculator from './cost-calculator'
 
 // ─── Typographie des articles ─────────────────────────────────────────────────
@@ -147,6 +152,20 @@ export const mdxComponents = {
   OabJustifications,
   SubcontractingFlows,
   DirectPaymentCircuit,
+  WorksActors,
+  BuildingSchedule,
+  SimplificationTimeline,
+  ReceptionProcedure,
+  ReceptionDeadlines,
+  BoampNotice,
+  CommuneDecision,
+  CommuneCalendar,
+  ElectricInterfaces,
+  DelayOrigins,
+  RegionBars,
+  DispenseShift,
+  PenaltyByDelay,
+  ProcurementByBuyer,
 }
 
 // ─── Composants utilisables dans les articles ─────────────────────────────────

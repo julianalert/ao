@@ -1306,3 +1306,346 @@ export function DirectPaymentCircuit({ caption }: { caption?: string }) {
     </Frame>
   )
 }
+
+// ─── Article « Marché public de travaux » ─────────────────────────────────────
+
+export function WorksActors({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Les acteurs d'un marché public de travaux" kicker="Cas d'une opération de bâtiment" caption={caption}>
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold tracking-wide text-gray-500 uppercase">Côté acheteur</p>
+          <Card title="Maître d'ouvrage" badge="L'acheteur public">Décide du projet, signe le marché, prononce la réception.</Card>
+          <Card title="Assistant à maîtrise d'ouvrage" tone="muted">Facultatif : aide l'acheteur à définir son besoin et à suivre l'opération.</Card>
+          <Card title="Comptable public" tone="muted">Paie les situations, après validation par la maîtrise d'œuvre et l'acheteur.</Card>
+        </div>
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold tracking-wide text-gray-500 uppercase">Conception et contrôle</p>
+          <Card title="Maître d'œuvre" badge="Architecte, bureau d'études">Conçoit le projet, rédige souvent le CCTP, dirige le chantier, émet les ordres de service, propose la réception.</Card>
+          <Card title="Contrôleur technique" tone="muted">Vérifie la solidité et la sécurité des ouvrages.</Card>
+          <Card title="Coordonnateur SPS et OPC" tone="muted">Coordonnent la sécurité entre entreprises et pilotent le planning.</Card>
+        </div>
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold tracking-wide text-gray-500 uppercase">Exécution</p>
+          <Card title="Entreprise titulaire" badge="Vous" tone="focus">Exécute les travaux de son lot, seule ou en groupement, et en répond devant l'acheteur.</Card>
+          <Card title="Cotraitants" tone="muted">Membres d'un groupement : chacun signe le marché avec le mandataire.</Card>
+          <Card title="Sous-traitants" tone="muted">Acceptés par l'acheteur (DC4), payés directement dès 600 € TTC.</Card>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2 text-[11px] font-medium sm:grid-cols-2">
+        <p className="rounded-lg border border-dashed border-blue-300 bg-white px-3 py-2 text-blue-800">
+          <span className="font-bold">Contrats :</span> l'acheteur signe un marché avec chaque entreprise (ou groupement) et un contrat avec chaque intervenant de la colonne du milieu.
+        </p>
+        <p className="rounded-lg border border-dashed border-gray-300 bg-white px-3 py-2 text-gray-600">
+          <span className="font-bold">Au quotidien :</span> l'entreprise n'a pas de contrat avec le maître d'œuvre, mais c'est lui qui dirige le chantier et vérifie ses situations.
+        </p>
+      </div>
+    </Frame>
+  )
+}
+
+// ─── Article « Gros œuvre » ───────────────────────────────────────────────────
+
+const GANTT_MONTHS = 12
+const GANTT_ROWS: { label: string; from: number; to: number; critical?: boolean }[] = [
+  { label: 'Installation, terrassements', from: 1, to: 1 },
+  { label: 'Gros œuvre : fondations, élévations, planchers', from: 1, to: 5, critical: true },
+  { label: 'Charpente, couverture, étanchéité', from: 5, to: 6 },
+  { label: 'Menuiseries extérieures', from: 6, to: 7 },
+  { label: 'Électricité, plomberie, CVC', from: 6, to: 10 },
+  { label: 'Cloisons, plâtrerie', from: 7, to: 9 },
+  { label: 'Revêtements, peinture', from: 9, to: 11 },
+  { label: 'Essais, OPR, réception', from: 12, to: 12 },
+]
+const GANTT_MILESTONES = [
+  { month: 2, label: 'Dalle basse coulée' },
+  { month: 4, label: 'Élévations terminées' },
+  { month: 6, label: 'Hors d\'eau' },
+  { month: 7, label: 'Hors d\'air' },
+]
+
+export function BuildingSchedule({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Planning indicatif d'une opération de bâtiment" kicker="Exemple, durées à adapter" caption={caption}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[36rem] border-separate border-spacing-x-0.5 border-spacing-y-1 text-xs">
+          <thead>
+            <tr>
+              <th className="w-48 text-left font-semibold text-gray-500">Lot</th>
+              {Array.from({ length: GANTT_MONTHS }, (_, i) => (
+                <th key={i} className="font-semibold text-gray-400">M{i + 1}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {GANTT_ROWS.map((r) => (
+              <tr key={r.label}>
+                <th className={`pr-2 text-left font-semibold leading-tight ${r.critical ? 'text-orange-700' : 'text-gray-800'}`}>{r.label}</th>
+                {Array.from({ length: GANTT_MONTHS }, (_, i) => {
+                  const on = i + 1 >= r.from && i + 1 <= r.to
+                  return (
+                    <td key={i} className={`h-6 ${on ? (r.critical ? 'bg-orange-500' : 'bg-blue-500') : 'bg-white ring-1 ring-gray-100'} ${on && i + 1 === r.from ? 'rounded-l' : ''} ${on && i + 1 === r.to ? 'rounded-r' : ''}`}>
+                      {on && <span className="sr-only">mois {i + 1}</span>}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+            <tr>
+              <th className="pr-2 pt-1 text-left text-[11px] font-semibold text-gray-500">Jalons libérés par le gros œuvre</th>
+              {Array.from({ length: GANTT_MONTHS }, (_, i) => {
+                const m = GANTT_MILESTONES.find((x) => x.month === i + 1)
+                return (
+                  <td key={i} className="pt-1 text-center align-top">
+                    {m && <span className="mx-auto block h-2.5 w-2.5 rotate-45 bg-gray-800" title={m.label} aria-hidden="true" />}
+                  </td>
+                )
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-600">
+        {GANTT_MILESTONES.map((m) => (
+          <li key={m.label} className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rotate-45 bg-gray-800" aria-hidden="true" /> M{m.month} : {m.label}
+          </li>
+        ))}
+        <li className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-orange-500" aria-hidden="true" /> Chemin critique : tout retard décale les lots suivants</li>
+      </ul>
+    </Frame>
+  )
+}
+
+// ─── Article « Loi de simplification 2026 » ───────────────────────────────────
+
+const SVE_STEPS: { date: string; title: string; text: string; status: 'done' | 'next' | 'later' }[] = [
+  { date: '26 mai 2026', title: 'Loi n° 2026-403', text: 'Promulguée le 26 mai, publiée au Journal officiel le 27 mai.', status: 'done' },
+  { date: '28 mai 2026', title: 'Variantes autorisées par défaut', text: 'En procédure formalisée aussi, sauf mention contraire (art. L2151-2 du CCP).', status: 'done' },
+  { date: '1er juillet 2026', title: 'Achats innovants', text: 'Sans publicité ni mise en concurrence sous 140 000 € HT, travaux compris.', status: 'done' },
+  { date: '1er janvier 2027', title: 'Dispense des travaux à 140 000 € HT', text: 'Pour les consultations engagées ou les avis envoyés à partir de cette date.', status: 'next' },
+  { date: 'Au plus tard fin 2030', title: 'Plateforme de l\'État', text: 'Obligatoire pour les acheteurs publics autres que les collectivités, date fixée par décret.', status: 'later' },
+]
+
+export function SimplificationTimeline({ caption }: { caption?: string }) {
+  const tones = {
+    done: { dot: 'bg-emerald-500', chip: 'bg-emerald-50 text-emerald-700 border-emerald-100', label: 'En vigueur' },
+    next: { dot: 'bg-orange-500', chip: 'bg-orange-50 text-orange-700 border-orange-200', label: 'À venir' },
+    later: { dot: 'bg-gray-400', chip: 'bg-gray-50 text-gray-600 border-gray-200', label: 'Échelonné' },
+  }
+  return (
+    <Frame title="Entrée en vigueur des mesures commande publique" kicker="Loi du 26 mai 2026, titre III" caption={caption}>
+      <ol className="grid gap-2 sm:grid-cols-5">
+        {SVE_STEPS.map((s) => {
+          const t = tones[s.status]
+          return (
+            <li key={s.date} className={`rounded-xl border bg-white p-3 ${s.status === 'next' ? 'border-orange-300 ring-2 ring-orange-100' : 'border-gray-200'}`}>
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-bold text-gray-900">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${t.dot}`} aria-hidden="true" /> {s.date}
+              </p>
+              <p className="text-sm font-semibold leading-snug text-gray-900">{s.title}</p>
+              <p className="mt-0.5 text-xs leading-snug text-gray-500">{s.text}</p>
+              <p className={`mt-2 inline-block rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${t.chip}`}>{t.label}</p>
+            </li>
+          )
+        })}
+      </ol>
+    </Frame>
+  )
+}
+
+// ─── Article « Réception des travaux » ────────────────────────────────────────
+
+export function ReceptionProcedure({ caption }: { caption?: string }) {
+  return (
+    <Frame title="La procédure de réception" kicker="CCAG Travaux 2021, article 41" caption={caption}>
+      <ol className="grid gap-2 sm:grid-cols-4">
+        <li><Card title="1 · Avis d'achèvement" badge="Vous">Par écrit, au maître d'ouvrage et au maître d'œuvre. Gardez la preuve de réception.</Card></li>
+        <li><Card title="2 · Opérations préalables" badge="Maître d'œuvre · 20 jours" tone="focus">Visite en votre présence, procès-verbal signé sur place.</Card></li>
+        <li><Card title="3 · Proposition" badge="Maître d'œuvre · 5 jours">Réception ou non, date d'achèvement proposée, réserves éventuelles.</Card></li>
+        <li><Card title="4 · Décision" badge="Maître d'ouvrage · 30 jours">Notifiée dans les 30 jours suivant le procès-verbal des opérations préalables.</Card></li>
+      </ol>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Card title="Décision notifiée" tone="good">La réception prend effet à la date d'achèvement retenue, pas à la date de la décision.</Card>
+        <Card title="Pas de décision dans les 30 jours" tone="muted">Les propositions du maître d'œuvre s'imposent au maître d'ouvrage et à l'entreprise.</Card>
+      </div>
+    </Frame>
+  )
+}
+
+const RECEPTION_DEADLINES = [
+  { when: 'Date d\'achèvement retenue', what: 'Fin des pénalités de retard, transfert de la garde de l\'ouvrage, début des garanties.', focus: true },
+  { when: 'Notification + 30 jours', what: 'Vous envoyez votre projet de décompte final.' },
+  { when: '+ 1 an', what: 'Fin de la garantie de parfait achèvement, sauf autre durée au CCAP.' },
+  { when: '+ 1 an et 30 jours', what: 'Remboursement de la retenue de garantie, si les réserves sont levées.' },
+  { when: '+ 2 ans', what: 'Fin de la garantie biennale de bon fonctionnement des équipements.' },
+  { when: '+ 10 ans', what: 'Fin de la garantie décennale.' },
+]
+
+export function ReceptionDeadlines({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Ce qui court à partir de la réception" kicker="Marché au CCAG Travaux 2021" caption={caption}>
+      <ol className="relative grid gap-2 sm:grid-cols-6">
+        {RECEPTION_DEADLINES.map((d, i) => (
+          <li key={d.when} className={`rounded-xl border bg-white p-3 ${d.focus ? 'border-orange-300 ring-2 ring-orange-100' : 'border-gray-200'}`}>
+            <span className={`mb-2 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${d.focus ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}>{i + 1}</span>
+            <p className="text-sm font-bold leading-snug text-gray-900">{d.when}</p>
+            <p className="mt-0.5 text-xs leading-snug text-gray-500">{d.what}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 text-[11px] text-gray-500">Durées par défaut du CCAG Travaux et du Code de la commande publique : le CCAP de votre marché peut prévoir autre chose.</p>
+    </Frame>
+  )
+}
+
+// ─── Article « BOAMP » ────────────────────────────────────────────────────────
+
+const AVIS_FIELDS: { label: string; value: string; point?: number }[] = [
+  { label: 'Acheteur', value: 'Commune de [exemple], services techniques' },
+  { label: 'Objet', value: 'Rénovation énergétique du groupe scolaire' },
+  { label: 'Procédure', value: 'Procédure adaptée ouverte' },
+  { label: 'Lots', value: '1 Gros œuvre · 2 Couverture · 3 Menuiseries extérieures · 4 Électricité · 5 Plomberie, CVC', point: 1 },
+  { label: 'Conditions de participation', value: 'Chiffre d\'affaires, références de moins de 5 ans, qualification ou preuve équivalente, assurance décennale', point: 2 },
+  { label: 'Visite', value: 'Obligatoire, sur rendez-vous avant le 4 novembre', point: 3 },
+  { label: 'Critères d\'attribution', value: 'Indiqués dans les documents de la consultation' },
+  { label: 'Date limite de réception des offres', value: '14 novembre 2026 à 12 h 00', point: 4 },
+  { label: 'Documents et dépôt', value: 'Adresse du profil d\'acheteur où télécharger le dossier et déposer l\'offre', point: 5 },
+]
+
+export function BoampNotice({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Les rubriques d'un avis à lire en premier" kicker="Exemple fictif" caption={caption}>
+      <div className="rounded-xl border border-gray-300 bg-white p-4 shadow-xs sm:p-5">
+        <p className="mb-1 text-center text-xs font-bold tracking-wider text-gray-500 uppercase">Avis de marché · Travaux</p>
+        <div className="mx-auto mb-4 h-px w-24 bg-gray-200" aria-hidden="true" />
+        <dl className="space-y-1.5">
+          {AVIS_FIELDS.map((f) => (
+            <div key={f.label} className={`grid gap-1 rounded-lg px-3 py-2 sm:grid-cols-[12rem_1fr_auto] sm:gap-3 ${f.point ? 'bg-blue-50 ring-1 ring-blue-100' : ''}`}>
+              <dt className="text-xs font-bold text-gray-500">{f.label}</dt>
+              <dd className="text-sm text-gray-800">{f.value}</dd>
+              {f.point ? (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[11px] font-bold text-white">{f.point}</span>
+              ) : <span className="hidden sm:block" />}
+            </div>
+          ))}
+        </dl>
+      </div>
+      <p className="mt-3 text-[11px] text-gray-500">Les numéros renvoient aux 5 points à vérifier. L'ordre et l'intitulé des rubriques varient selon le formulaire utilisé par l'acheteur.</p>
+    </Frame>
+  )
+}
+
+// ─── Article « Communes » ─────────────────────────────────────────────────────
+
+export function CommuneDecision({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Qui prépare, qui décide, qui signe" kicker="Marchés de travaux d'une commune" caption={caption}>
+      <div className="grid gap-2 md:grid-cols-4">
+        <Card title="Services techniques" badge="Préparent" tone="focus">Définissent le besoin, demandent les devis, préparent le dossier, suivent le chantier. Dans un village : le secrétaire de mairie et l'adjoint aux travaux.</Card>
+        <Card title="Conseil municipal" badge="Autorise">Vote le budget et délègue au maire les décisions sur les marchés, dans les limites qu'il fixe.</Card>
+        <Card title="Maire ou adjoint délégué" badge="Décide et signe">Attribue et signe les marchés sur délégation (art. L2122-22, 4° du CGCT).</Card>
+        <Card title="Comptable public" badge="Paie">Règle vos factures après validation par la mairie, dans un délai de 30 jours.</Card>
+      </div>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <Card title="Commission d'appel d'offres" tone="muted">Élus : choisit le titulaire des seuls marchés qui atteignent les seuils européens.</Card>
+        <Card title="Intercommunalité" tone="muted">Achète à la place de la commune pour les compétences qui lui ont été transférées (voirie communautaire, eau, équipements…).</Card>
+      </div>
+    </Frame>
+  )
+}
+
+const COMMUNE_MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+const COMMUNE_ROWS: { label: string; months: number[]; color: string }[] = [
+  { label: 'Préparation et vote du budget', months: [0, 1, 2, 3], color: 'bg-blue-600' },
+  { label: 'Consultations pour les travaux d\'été', months: [3, 4, 5], color: 'bg-orange-500' },
+  { label: 'Travaux dans les écoles', months: [6, 7], color: 'bg-emerald-500' },
+  { label: 'Consultations d\'automne, accords-cadres', months: [8, 9, 10], color: 'bg-orange-500' },
+  { label: 'Bon moment pour se faire connaître', months: [0, 1, 8], color: 'bg-gray-700' },
+]
+
+export function CommuneCalendar({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Calendrier typique des achats de travaux d'une commune" kicker="Indicatif" caption={caption}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[38rem] border-separate border-spacing-x-0.5 border-spacing-y-1.5 text-xs">
+          <thead>
+            <tr>
+              <th className="w-52 text-left font-semibold text-gray-500">Étape</th>
+              {COMMUNE_MONTHS.map((m) => <th key={m} className="font-semibold text-gray-400">{m}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {COMMUNE_ROWS.map((r) => (
+              <tr key={r.label}>
+                <th className="pr-2 text-left font-semibold leading-tight text-gray-800">{r.label}</th>
+                {COMMUNE_MONTHS.map((m, i) => (
+                  <td key={m} className={`h-6 rounded ${r.months.includes(i) ? r.color : 'bg-white ring-1 ring-gray-100'}`}>
+                    {r.months.includes(i) && <span className="sr-only">{m}</span>}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[11px] text-gray-500">Budget voté au plus tard le 15 avril (30 avril l'année du renouvellement des conseils municipaux). Les subventions et les élections peuvent décaler ce rythme.</p>
+    </Frame>
+  )
+}
+
+// ─── Article « Électriciens » ─────────────────────────────────────────────────
+
+const ELEC_INTERFACES = [
+  { lot: 'Gros œuvre', when: 'Pendant le gros œuvre', text: 'Réservations, fourreaux et boîtiers noyés dans les dalles et les voiles.' },
+  { lot: 'Cloisons, plâtrerie', when: 'Avant la fermeture des cloisons', text: 'Incorporations, puis rebouchages : qui les fait ?' },
+  { lot: 'Chauffage, ventilation, plomberie', when: 'Second œuvre', text: 'Alimentation des centrales de traitement d\'air, de la chaufferie, de l\'eau chaude.' },
+  { lot: 'Menuiseries, serrurerie', when: 'Second œuvre', text: 'Portes motorisées, contrôle d\'accès, ventouses, volets roulants.' },
+  { lot: 'Sécurité incendie, courants faibles', when: 'Selon le périmètre du lot', text: 'Détection, alarme, réseau informatique, interphonie, vidéoprotection.' },
+  { lot: 'VRD, réseaux extérieurs', when: 'Fin de chantier', text: 'Raccordement au réseau, tranchées, éclairage extérieur, bornes de recharge.' },
+]
+
+export function ElectricInterfaces({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Les interfaces du lot électricité" kicker="Opération de bâtiment type" caption={caption}>
+      <div className="mx-auto mb-3 max-w-md">
+        <Card title="Lot électricité : courants forts et courants faibles" badge="Vous" tone="focus">
+          Présent à presque toutes les phases du chantier, de la première dalle aux essais de réception.
+        </Card>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+        {ELEC_INTERFACES.map((x) => (
+          <li key={x.lot}><Card title={x.lot} badge={x.when}>{x.text}</Card></li>
+        ))}
+      </ul>
+    </Frame>
+  )
+}
+
+// ─── Article « Pénalités de retard » ──────────────────────────────────────────
+
+const DELAY_ORIGINS: { origin: string; action: string; result: string; good: boolean }[] = [
+  { origin: 'Votre entreprise', action: 'Effectif, approvisionnement, sous-traitant défaillant : rattrapez et prévenez le maître d\'œuvre.', result: 'Pénalités dues, dans la limite du seuil et du plafond', good: false },
+  { origin: 'L\'acheteur ou le maître d\'œuvre', action: 'Ordre de service tardif, plans en retard, ajournement : demandez par écrit une prolongation, preuves à l\'appui.', result: 'Délai prolongé : pas de pénalité sur ces jours', good: true },
+  { origin: 'Les intempéries', action: 'Au-delà du nombre de jours prévu au CCAP : relevés météo et demande de prolongation.', result: 'Délai prolongé', good: true },
+  { origin: 'Une autre entreprise', action: 'Votre lot attend le sien : signalez-le au maître d\'œuvre dès le constat, faites-le inscrire au compte rendu.', result: 'Retard non imputable', good: true },
+  { origin: 'Des travaux en plus', action: 'Commandés par ordre de service : exécutez, mais émettez des réserves écrites et demandez un délai.', result: 'Délai et prix à ajuster', good: true },
+]
+
+export function DelayOrigins({ caption }: { caption?: string }) {
+  return (
+    <Frame title="Éviter ou limiter les pénalités" kicker="Selon l'origine du retard" caption={caption}>
+      <ul className="space-y-2">
+        {DELAY_ORIGINS.map((d) => (
+          <li key={d.origin} className="grid gap-2 rounded-xl border border-gray-200 bg-white p-3 sm:grid-cols-[11rem_1fr_13rem] sm:items-center">
+            <p className="text-sm font-bold text-gray-900">{d.origin}</p>
+            <p className="text-xs leading-5 text-gray-600">{d.action}</p>
+            <p className={`rounded-lg px-2 py-1.5 text-xs font-semibold ${d.good ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`}>
+              {d.good ? '✓' : '✕'} {d.result}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Frame>
+  )
+}
